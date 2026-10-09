@@ -21,6 +21,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "tracker"))
 import tracker  # noqa: E402  由工作流程從私有 repo 抓進來
 
+# 從 GitHub 密鑰複製貼上時常多帶到空白或換行,會讓網址無效(InvalidURL);一律去掉頭尾空白
+for _k in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "TRACKER_TOKEN", "HOME_LAT", "HOME_LNG"):
+    if _k in os.environ:
+        os.environ[_k] = os.environ[_k].strip()
+
 REPO = os.environ.get("TRACKER_REPO", "TommyPai/inat-victoria-tracker")
 GH_API = os.environ.get("GITHUB_API_BASE", "https://api.github.com")
 TG_API = os.environ.get("TELEGRAM_API_BASE", "https://api.telegram.org")
@@ -93,4 +98,6 @@ if __name__ == "__main__":
         main()
     except Exception as e:  # 公開 repo 的執行紀錄任何人都看得到: 只印錯誤類型,不印內容或追蹤細節
         print(f"執行失敗: {type(e).__name__}", file=sys.stderr)
+        if type(e).__name__ == "InvalidURL":
+            print("提示: TELEGRAM_BOT_TOKEN 密鑰的內容可能不正確(中間有空白、換行,或多貼了其他文字)", file=sys.stderr)
         sys.exit(1)
