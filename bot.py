@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent / "tracker"))
 import tracker  # noqa: E402  由工作流程從私有 repo 抓進來
 
 # 從 GitHub 密鑰複製貼上時常多帶到空白或換行,會讓網址無效(InvalidURL);一律去掉頭尾空白
-for _k in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "TRACKER_TOKEN", "HOME_LAT", "HOME_LNG"):
+for _k in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "TELEGRAM_READONLY_CHAT_IDS", "TRACKER_TOKEN", "HOME_LAT", "HOME_LNG"):
     if _k in os.environ:
         os.environ[_k] = os.environ[_k].strip()
 # Telegram token 的格式是「數字:英數字」;從密鑰內容中找出這一段,忽略一起貼進來的說明文字、空白或換行
