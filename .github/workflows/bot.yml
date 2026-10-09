@@ -1,0 +1,36 @@
+name: Telegram bot
+
+on:
+  workflow_dispatch:   # 由 cron-job.org 每 2 分鐘觸發(GitHub 自己的排程目前不可靠)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-bot
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      - name: Fetch tracker code and config (private repo)
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          repository: TommyPai/inat-victoria-tracker
+          token: ${{ secrets.TRACKER_TOKEN }}
+          path: tracker
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Handle Telegram updates
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TRACKER_TOKEN: ${{ secrets.TRACKER_TOKEN }}
+          HOME_LAT: ${{ secrets.HOME_LAT }}
+          HOME_LNG: ${{ secrets.HOME_LNG }}
+        run: python bot.py
