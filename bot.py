@@ -12,6 +12,7 @@
 import base64
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -25,6 +26,11 @@ import tracker  # noqa: E402  由工作流程從私有 repo 抓進來
 for _k in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "TRACKER_TOKEN", "HOME_LAT", "HOME_LNG"):
     if _k in os.environ:
         os.environ[_k] = os.environ[_k].strip()
+# Telegram token 的格式是「數字:英數字」;從密鑰內容中找出這一段,忽略一起貼進來的說明文字、空白或換行
+_m = re.search(r"\d{6,}:[A-Za-z0-9_-]{30,}", os.environ.get("TELEGRAM_BOT_TOKEN", ""))
+TOKEN_FORMAT_OK = bool(_m)
+if _m:
+    os.environ["TELEGRAM_BOT_TOKEN"] = _m.group(0)
 
 REPO = os.environ.get("TRACKER_REPO", "TommyPai/inat-victoria-tracker")
 GH_API = os.environ.get("GITHUB_API_BASE", "https://api.github.com")
@@ -98,6 +104,7 @@ if __name__ == "__main__":
         main()
     except Exception as e:  # 公開 repo 的執行紀錄任何人都看得到: 只印錯誤類型,不印內容或追蹤細節
         print(f"執行失敗: {type(e).__name__}", file=sys.stderr)
-        if type(e).__name__ == "InvalidURL":
-            print("提示: TELEGRAM_BOT_TOKEN 密鑰的內容可能不正確(中間有空白、換行,或多貼了其他文字)", file=sys.stderr)
+        if not TOKEN_FORMAT_OK:  # 只印長度與格式判斷,絕不印出內容
+            raw = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+            print(f"提示: TELEGRAM_BOT_TOKEN 密鑰裡找不到「數字:英數字」格式的 token(密鑰長度 {len(raw)} 個字元)", file=sys.stderr)
         sys.exit(1)
