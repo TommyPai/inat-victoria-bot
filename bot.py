@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
@@ -85,7 +86,15 @@ def main():
         except Exception as e:
             print(f"設定指令選單失敗: {type(e).__name__}", file=sys.stderr)
 
-    updates = tg("getUpdates", timeout=0).get("result", [])
+    try:
+        updates = tg("getUpdates", timeout=0).get("result", [])
+    except (urllib.error.URLError, TimeoutError) as e:
+        # Telegram 暫時連不上或沒回應: 這時還沒處理、也沒確認任何訊息,2 分鐘後的下一次執行會原封不動再處理,
+        # 所以只留警告、不算失敗(避免每次網路抖動都寄失敗通知)。token 錯誤等 4xx 仍照常失敗。
+        if isinstance(e, urllib.error.HTTPError) and e.code < 500:
+            raise
+        print(f"::warning::Telegram 暫時連不上({type(e).__name__}),下一次執行會自動重試")
+        return
     for u in updates:
         tracker.handle_update(u, cfg, controls, chat)
 
