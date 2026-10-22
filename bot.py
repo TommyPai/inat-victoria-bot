@@ -6,10 +6,14 @@
 - 每次被觸發時:收 Telegram 的新訊息 → 交給 tracker.handle_update 處理並回覆
   → 若追蹤清單、暫停或靜音有變動,寫回私有 repo 的 config.json → 最後才向 Telegram 確認已讀。
 - 不保存任何狀態;某次執行被跳過或失敗,沒確認的訊息會在下一次一起處理。
+- 有設定 TG_QUEUE_URL 時改用 webhook 模式: Telegram 把訊息推到 Cloudflare Worker(cloudflare/worker.js),
+  Worker 存起來並立刻觸發這個工作流程;這裡改向 Worker 取訊息與確認。拿掉這個設定就自動改回 getUpdates。
 
-環境變數: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TRACKER_TOKEN(私有 repo 的 Contents 讀寫權杖), HOME_LAT, HOME_LNG
+環境變數: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TRACKER_TOKEN(私有 repo 的 Contents 讀寫權杖), HOME_LAT, HOME_LNG,
+         webhook 模式另需 TG_QUEUE_URL, TG_QUEUE_SECRET, TG_WEBHOOK_SECRET
 """
 import base64
+import hashlib
 import json
 import os
 import re
@@ -24,7 +28,8 @@ sys.path.insert(0, str(Path(__file__).parent / "tracker"))
 import tracker  # noqa: E402  由工作流程從私有 repo 抓進來
 
 # 從 GitHub 密鑰複製貼上時常多帶到空白或換行,會讓網址無效(InvalidURL);一律去掉頭尾空白
-for _k in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "TELEGRAM_READONLY_CHAT_IDS", "TRACKER_TOKEN", "HOME_LAT", "HOME_LNG"):
+for _k in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "TELEGRAM_READONLY_CHAT_IDS", "TRACKER_TOKEN", "HOME_LAT", "HOME_LNG",
+           "TG_QUEUE_URL", "TG_QUEUE_SECRET", "TG_WEBHOOK_SECRET"):
     if _k in os.environ:
         os.environ[_k] = os.environ[_k].strip()
 # Telegram token 的格式是「數字:英數字」;從密鑰內容中找出這一段,忽略一起貼進來的說明文字、空白或換行
@@ -36,6 +41,7 @@ if _m:
 REPO = os.environ.get("TRACKER_REPO", "TommyPai/inat-victoria-tracker")
 GH_API = os.environ.get("GITHUB_API_BASE", "https://api.github.com")
 TG_API = os.environ.get("TELEGRAM_API_BASE", "https://api.telegram.org")
+QUEUE_URL = os.environ.get("TG_QUEUE_URL", "").rstrip("/")  # 空的 = 沒啟用 webhook,照舊用 getUpdates
 
 
 def tg(method, **params):
@@ -58,6 +64,30 @@ def save_config(cfg, message):
     content = json.dumps(cfg, indent=2, ensure_ascii=False) + "\n"
     gh("PUT", "contents/config.json", {"message": message, "branch": "main", "sha": cur["sha"],
                                        "content": base64.b64encode(content.encode("utf-8")).decode()})
+
+
+def queue(method, path, body=None):
+    """向 Cloudflare Worker 取訊息(GET /updates)或確認已處理(POST /ack)。"""
+    req = urllib.request.Request(
+        f"{QUEUE_URL}{path}", method=method, data=json.dumps(body).encode() if body is not None else None,
+        headers={"Authorization": f"Bearer {os.environ['TG_QUEUE_SECRET']}", "Content-Type": "application/json",
+                 "User-Agent": "inat-telegram-bot"})
+    return json.load(urllib.request.urlopen(req, timeout=30))
+
+
+def sync_webhook(cfg):
+    """讓 Telegram 的 webhook 設定跟 TG_QUEUE_URL 一致: 有設定就指向 Worker,拿掉就關掉 webhook 改回 getUpdates。
+    config 只記網址的雜湊,不記網址本身。設定 webhook 時 Telegram 會把還沒取走的訊息轉推給 Worker,不會掉訊息。"""
+    want = hashlib.sha256(QUEUE_URL.encode()).hexdigest()[:12] if QUEUE_URL else None
+    if cfg.get("webhook") == want:
+        return
+    if want:
+        tg("setWebhook", url=f"{QUEUE_URL}/telegram", secret_token=os.environ["TG_WEBHOOK_SECRET"],
+           allowed_updates=json.dumps(["message", "callback_query"]))
+        cfg["webhook"] = want
+    else:
+        tg("deleteWebhook")
+        cfg.pop("webhook", None)
 
 
 def prune_controls(controls):
@@ -87,13 +117,16 @@ def main():
             print(f"設定指令選單失敗: {type(e).__name__}", file=sys.stderr)
 
     try:
-        updates = tg("getUpdates", timeout=0).get("result", [])
+        sync_webhook(cfg)
+        updates = (queue("GET", "/updates") if QUEUE_URL else tg("getUpdates", timeout=0)).get("result", [])
     except (urllib.error.URLError, TimeoutError) as e:
-        # Telegram 暫時連不上或沒回應: 這時還沒處理、也沒確認任何訊息,2 分鐘後的下一次執行會原封不動再處理,
-        # 所以只留警告、不算失敗(避免每次網路抖動都寄失敗通知)。token 錯誤等 4xx 仍照常失敗。
+        # Telegram / Worker 暫時連不上或沒回應: 這時還沒處理、也沒確認任何訊息,下一次執行會原封不動再處理,
+        # 所以只留警告、不算失敗(避免每次網路抖動都寄失敗通知)。token 或密鑰錯誤等 4xx 仍照常失敗。
         if isinstance(e, urllib.error.HTTPError) and e.code < 500:
             raise
-        print(f"::warning::Telegram 暫時連不上({type(e).__name__}),下一次執行會自動重試")
+        print(f"::warning::{'Worker' if QUEUE_URL else 'Telegram'} 暫時連不上({type(e).__name__}),下一次執行會自動重試")
+        if json.dumps(cfg, sort_keys=True, ensure_ascii=False) != before:  # webhook 已切換成功的話,記下來
+            save_config(cfg, "bot: update config from Telegram")
         return
     for u in updates:
         tracker.handle_update(u, cfg, controls, chat)
@@ -104,7 +137,8 @@ def main():
     if json.dumps(cfg, sort_keys=True, ensure_ascii=False) != before:
         save_config(cfg, "bot: update config from Telegram")
     if updates:  # 全部處理完、設定也存好之後才確認已讀
-        tg("getUpdates", offset=updates[-1]["update_id"] + 1, timeout=0, limit=1)
+        offset = updates[-1]["update_id"] + 1
+        queue("POST", "/ack", {"offset": offset}) if QUEUE_URL else tg("getUpdates", offset=offset, timeout=0, limit=1)
     print(f"處理了 {len(updates)} 則更新")  # 公開 repo 的執行紀錄是公開的,這裡只印數量
 
 

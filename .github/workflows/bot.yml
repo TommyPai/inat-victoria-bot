@@ -1,7 +1,7 @@
 name: Telegram bot
 
 on:
-  workflow_dispatch:   # 由 cron-job.org 每 2 分鐘觸發(GitHub 自己的排程目前不可靠)
+  workflow_dispatch:   # 由 cron-job.org 每 2 分鐘觸發(GitHub 自己的排程目前不可靠);啟用 webhook 後 Cloudflare Worker 收到訊息也會立刻觸發
 
 permissions:
   contents: read
@@ -34,4 +34,7 @@ jobs:
           TELEGRAM_READONLY_CHAT_IDS: ${{ secrets.TELEGRAM_READONLY_CHAT_IDS }}
           HOME_LAT: ${{ secrets.HOME_LAT }}
           HOME_LNG: ${{ secrets.HOME_LNG }}
+          TG_QUEUE_URL: ${{ secrets.TG_QUEUE_URL }}            # 以下三個只有啟用 Cloudflare webhook 才需要
+          TG_QUEUE_SECRET: ${{ secrets.TG_QUEUE_SECRET }}
+          TG_WEBHOOK_SECRET: ${{ secrets.TG_WEBHOOK_SECRET }}
         run: python bot.py
