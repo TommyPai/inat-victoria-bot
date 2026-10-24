@@ -1,0 +1,558 @@
+{
+ "place_id": 7830,
+ "quality_grades": [
+  "research",
+  "needs_id"
+ ],
+ "groups": [
+  {
+   "name": "金龜",
+   "icon": "🪲"
+  },
+  {
+   "name": "吉丁蟲",
+   "icon": "💎"
+  },
+  {
+   "name": "鍬形蟲",
+   "icon": "🦌"
+  },
+  {
+   "name": "步行蟲",
+   "icon": "🐾"
+  },
+  {
+   "name": "天牛",
+   "icon": "🦗"
+  },
+  {
+   "name": "象鼻蟲",
+   "icon": "🐘"
+  },
+  {
+   "name": "擬步行蟲",
+   "icon": "🌑"
+  },
+  {
+   "name": "竹節蟲",
+   "icon": "🎋"
+  },
+  {
+   "name": "蟬",
+   "icon": "🎵"
+  }
+ ],
+ "species": [
+  {
+   "taxon_id": 893683,
+   "name": "Onthophagus mniszechi",
+   "zh": "",
+   "rank": "species",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 546507,
+   "name": "Trichaulax",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 1069673,
+   "name": "Trichaulax",
+   "zh": "重複條目",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 341893,
+   "name": "Chondropyga",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 146755,
+   "name": "Chlorobapta",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 332345,
+   "name": "Temognatha",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 333300,
+   "name": "Stigmodera",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 374268,
+   "name": "Syndesus",
+   "zh": "",
+   "rank": "genus",
+   "group": "鍬形蟲"
+  },
+  {
+   "taxon_id": 894313,
+   "name": "Lissapterus",
+   "zh": "",
+   "rank": "genus",
+   "group": "鍬形蟲"
+  },
+  {
+   "taxon_id": 503827,
+   "name": "Safrina",
+   "zh": "",
+   "rank": "genus",
+   "group": "鍬形蟲"
+  },
+  {
+   "taxon_id": 447681,
+   "name": "Lissotes",
+   "zh": "",
+   "rank": "genus",
+   "group": "鍬形蟲"
+  },
+  {
+   "taxon_id": 471839,
+   "name": "Ceratognathus",
+   "zh": "",
+   "rank": "genus",
+   "group": "鍬形蟲"
+  },
+  {
+   "taxon_id": 423153,
+   "name": "Carenum",
+   "zh": "",
+   "rank": "genus",
+   "group": "步行蟲"
+  },
+  {
+   "taxon_id": 527587,
+   "name": "Julodimorpha",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 333313,
+   "name": "Castiarina",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 333897,
+   "name": "Cyrioides",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 333327,
+   "name": "Calotemognatha",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 516150,
+   "name": "Piesarthrius",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 527966,
+   "name": "Sceleocantha",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 129128,
+   "name": "Chrysolopus",
+   "zh": "",
+   "rank": "genus",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 626490,
+   "name": "Diadoxus",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 522074,
+   "name": "Cnemoplites",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 518841,
+   "name": "Cacodacnus",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 993454,
+   "name": "Phaolus",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 627403,
+   "name": "Enneaphyllus",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 201856,
+   "name": "Agrianome",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 1168739,
+   "name": "Hagrides",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 1085661,
+   "name": "Phytoecia caerulescens",
+   "zh": "",
+   "rank": "species",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 488530,
+   "name": "Talaurinus",
+   "zh": "",
+   "rank": "genus",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 801443,
+   "name": "Mythites",
+   "zh": "",
+   "rank": "genus",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 574763,
+   "name": "Acantholophus",
+   "zh": "",
+   "rank": "genus",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 631153,
+   "name": "Tetralophus",
+   "zh": "",
+   "rank": "genus",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 1170094,
+   "name": "Telocera wollastoni",
+   "zh": "",
+   "rank": "species",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 1528108,
+   "name": "Brachytria jugosa",
+   "zh": "",
+   "rank": "species",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 201848,
+   "name": "Helea",
+   "zh": "",
+   "rank": "genus",
+   "group": "擬步行蟲"
+  },
+  {
+   "taxon_id": 564314,
+   "name": "Saragus",
+   "zh": "",
+   "rank": "genus",
+   "group": "擬步行蟲"
+  },
+  {
+   "taxon_id": 1570626,
+   "name": "Clemacantha goliath",
+   "zh": "",
+   "rank": "species",
+   "group": "竹節蟲"
+  },
+  {
+   "taxon_id": 141860,
+   "name": "Extatosoma tiaratum",
+   "zh": "幽靈竹節蟲",
+   "rank": "species",
+   "group": "竹節蟲"
+  },
+  {
+   "taxon_id": 337434,
+   "name": "Podacanthus typhon",
+   "zh": "",
+   "rank": "species",
+   "group": "竹節蟲"
+  },
+  {
+   "taxon_id": 337431,
+   "name": "Tropidoderus childrenii",
+   "zh": "",
+   "rank": "species",
+   "group": "竹節蟲"
+  },
+  {
+   "taxon_id": 337443,
+   "name": "Didymuria violescens",
+   "zh": "",
+   "rank": "species",
+   "group": "竹節蟲"
+  },
+  {
+   "taxon_id": 201869,
+   "name": "Anoplognathus",
+   "zh": "聖誕金龜",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 358053,
+   "name": "Scaraphites",
+   "zh": "",
+   "rank": "genus",
+   "group": "步行蟲"
+  },
+  {
+   "taxon_id": 423161,
+   "name": "Philoscaphus",
+   "zh": "",
+   "rank": "genus",
+   "group": "步行蟲"
+  },
+  {
+   "taxon_id": 556321,
+   "name": "Paraschizognathus",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 892138,
+   "name": "Schizognathus",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 1026812,
+   "name": "Saulostomus",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 123158,
+   "name": "Xylotrupes",
+   "zh": "姬獨角仙屬 (姬兜屬",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 893029,
+   "name": "Novapus",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 422910,
+   "name": "Hyperion",
+   "zh": "",
+   "rank": "genus",
+   "group": "步行蟲"
+  },
+  {
+   "taxon_id": 1180701,
+   "name": "Hemichnoodes",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 627272,
+   "name": "Elephastomus",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 332335,
+   "name": "Blackburnium",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 208174,
+   "name": "Tettigarcta crinita",
+   "zh": "",
+   "rank": "species",
+   "group": "蟬"
+  },
+  {
+   "taxon_id": 603326,
+   "name": "Amphirhoe",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 122636,
+   "name": "Omorgus",
+   "zh": "瘤皮金龜屬",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 325550,
+   "name": "Neorrhina punctata",
+   "zh": "",
+   "rank": "species",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 903575,
+   "name": "Clithria",
+   "zh": "",
+   "rank": "genus",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 986305,
+   "name": "Metallesthes unicolor",
+   "zh": "",
+   "rank": "species",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 1430976,
+   "name": "Evanides bakewellii",
+   "zh": "",
+   "rank": "species",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 578314,
+   "name": "Hesthesis plorator",
+   "zh": "",
+   "rank": "species",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 781879,
+   "name": "Tragocerus lepidopterus",
+   "zh": "",
+   "rank": "species",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 624992,
+   "name": "Disterna",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 533043,
+   "name": "Bimia bicolor",
+   "zh": "",
+   "rank": "species",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 333384,
+   "name": "Rhytiphora",
+   "zh": "",
+   "rank": "genus",
+   "group": "天牛"
+  },
+  {
+   "taxon_id": 362440,
+   "name": "Figulus",
+   "zh": "",
+   "rank": "genus",
+   "group": "鍬形蟲"
+  },
+  {
+   "taxon_id": 377117,
+   "name": "Mitophyllus",
+   "zh": "",
+   "rank": "genus",
+   "group": "鍬形蟲"
+  },
+  {
+   "taxon_id": 639898,
+   "name": "Iridotaenia",
+   "zh": "",
+   "rank": "genus",
+   "group": "吉丁蟲"
+  },
+  {
+   "taxon_id": 516491,
+   "name": "Repsimus manicatus",
+   "zh": "",
+   "rank": "species",
+   "group": "金龜"
+  },
+  {
+   "taxon_id": 424594,
+   "name": "Rhinotia haemoptera",
+   "zh": "",
+   "rank": "species",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 955808,
+   "name": "Rhynolaccus formicarius",
+   "zh": "",
+   "rank": "species",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 823600,
+   "name": "Psapharus ruficornis",
+   "zh": "",
+   "rank": "species",
+   "group": "象鼻蟲"
+  },
+  {
+   "taxon_id": 369222,
+   "name": "Sphenophorus brunnipennis",
+   "zh": "",
+   "rank": "species",
+   "group": "象鼻蟲"
+  }
+ ]
+}

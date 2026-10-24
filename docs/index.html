@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>維多利亞甲蟲地圖</title>
+<meta name="description" content="維多利亞州追蹤物種近 30 天的 iNaturalist 目擊地圖,附市場參考價格">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪲</text></svg>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --panel-2: #f1efe9; --text: #1d1d1b; --muted: #6b6a64;
+    --line: #e2dfd6; --accent: #2f6b4f; --accent-ink: #ffffff; --shadow: 0 6px 24px rgba(30, 28, 20, .14);
+    --chip: #ffffff; --chip-off: #ecebe5; --price: #8a5a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141513; --panel: #1e201d; --panel-2: #272a26; --text: #ecebe6; --muted: #a3a29b;
+      --line: #343731; --accent: #7fc4a0; --accent-ink: #10231a; --shadow: 0 6px 24px rgba(0, 0, 0, .5);
+      --chip: #262925; --chip-off: #1b1d1a; --price: #f0c060;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141513; --panel: #1e201d; --panel-2: #272a26; --text: #ecebe6; --muted: #a3a29b;
+    --line: #343731; --accent: #7fc4a0; --accent-ink: #10231a; --shadow: 0 6px 24px rgba(0, 0, 0, .5);
+    --chip: #262925; --chip-off: #1b1d1a; --price: #f0c060;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+  #map { position: fixed; inset: 0; background: var(--bg); }
+  button { font: inherit; color: inherit; }
+
+  /* 上方標題與篩選 */
+  .top { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: max(10px, env(safe-area-inset-top)) 12px 0;
+    pointer-events: none; }
+  .bar { pointer-events: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 10px 12px; max-width: 980px; margin: 0 auto; }
+  .title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .title h1 { margin: 0; font-size: 17px; letter-spacing: .02em; }
+  .status { color: var(--muted); font-size: 13px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--chip);
+    border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .chip .dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+  .chip.off { background: var(--chip-off); color: var(--muted); }
+  .chip.off .dot { opacity: .3; }
+  .chip .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; flex: none; }
+  .seg button { border: 0; background: var(--chip); padding: 4px 10px; font-size: 13px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .focus { display: none; margin-top: 6px; font-size: 13px; }
+  .focus.on { display: flex; gap: 8px; align-items: center; }
+  .focus button { border: 1px solid var(--line); background: var(--chip); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+
+  /* 左下角目錄按鈕與面板 */
+  .fab { position: fixed; z-index: 1000; left: 12px; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 8px; }
+  .fab button { background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 999px;
+    padding: 10px 16px; cursor: pointer; font-weight: 600; }
+  .fab button.icon { padding: 10px 13px; font-weight: 400; }
+  .drawer { position: fixed; z-index: 1100; left: 12px; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 54px);
+    width: min(420px, calc(100vw - 24px)); max-height: min(70vh, 640px); display: none; flex-direction: column;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+  .drawer.open { display: flex; }
+  .drawer header { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); }
+  .drawer header h2 { margin: 0 0 6px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .drawer header h2 button { border: 0; background: none; font-size: 20px; cursor: pointer; color: var(--muted); padding: 0 4px; }
+  .drawer input { width: 100%; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); border-radius: 10px;
+    padding: 7px 10px; font: inherit; font-size: 14px; }
+  .list { overflow-y: auto; padding: 4px 0 10px; }
+  .grp { padding: 10px 14px 4px; font-size: 13px; font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 6px;
+    position: sticky; top: 0; background: var(--panel); }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 14px; border-top: 1px solid var(--line);
+    cursor: pointer; text-align: left; width: 100%; background: none; border-left: 0; border-right: 0; border-bottom: 0; }
+  .row:hover { background: var(--panel-2); }
+  .row .nm { font-style: italic; font-weight: 600; }
+  .row .zh { font-style: normal; font-weight: 400; color: var(--muted); margin-left: 4px; }
+  .row .cnt { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+  .row .pr { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+  .row .pr b { color: var(--price); font-weight: 600; }
+  .row .pr .none { color: var(--muted); }
+  .note { padding: 10px 14px 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); background: var(--panel-2); }
+
+  /* 地圖彈出視窗 */
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+  .leaflet-popup-content { margin: 10px 12px; width: 240px !important; }
+  .pop img { width: 100%; height: 170px; object-fit: cover; border-radius: 8px; background: var(--panel-2); display: block; }
+  .pop .sp { margin-top: 8px; font-weight: 700; }
+  .pop .sci { font-style: italic; font-weight: 400; color: var(--muted); }
+  .pop .meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .pop a { color: var(--accent); font-weight: 600; }
+  .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+  .leaflet-control-attribution { background: color-mix(in srgb, var(--panel) 85%, transparent) !important; color: var(--muted); }
+  .leaflet-control-attribution a { color: var(--muted); }
+  .leaflet-top { top: 120px; }
+  .leaflet-tile-pane { filter: saturate(.75) contrast(.95); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
+  }
+  :root[data-theme="dark"] .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
+  .cl { background: var(--panel); color: var(--text); border: 2px solid var(--accent); border-radius: 50%; display: grid; place-items: center;
+    font-weight: 700; font-size: 13px; box-shadow: var(--shadow); font-variant-numeric: tabular-nums; }
+  .msg { position: fixed; z-index: 1200; left: 50%; bottom: 80px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 14px; display: none; max-width: calc(100vw - 32px); }
+  .msg.on { display: block; }
+  .msg button { margin-left: 8px; border: 1px solid var(--line); background: var(--chip); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+  @media (max-width: 520px) { .title h1 { font-size: 16px; } .leaflet-top { top: 128px; } }
+</style>
+</head>
+<body>
+<div id="map" role="application" aria-label="目擊地圖"></div>
+
+<div class="top">
+  <div class="bar">
+    <div class="title"><h1>🪲 維多利亞甲蟲地圖</h1><span class="status" id="status">載入中…</span></div>
+    <div class="chips" id="chips">
+      <span class="seg" role="group" aria-label="時間範圍">
+        <button data-days="7" aria-pressed="false">7 天</button><button data-days="30" aria-pressed="true">30 天</button>
+      </span>
+    </div>
+    <div class="focus" id="focus"><span id="focusText"></span><button id="clearFocus">顯示全部</button></div>
+  </div>
+</div>
+
+<div class="fab">
+  <button id="openCatalog" aria-expanded="false" aria-controls="drawer">📋 目錄</button>
+  <button id="locate" class="icon" title="我的位置" aria-label="顯示我的位置">📍</button>
+</div>
+
+<section class="drawer" id="drawer" aria-label="物種目錄與參考價格">
+  <header>
+    <h2><span>物種目錄 · 參考價格</span><button id="closeCatalog" aria-label="關閉">×</button></h2>
+    <input id="search" type="search" placeholder="搜尋學名或中文名" autocomplete="off">
+  </header>
+  <div class="list" id="list"></div>
+  <div class="note" id="priceNote"></div>
+</section>
+
+<div class="msg" id="msg"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+"use strict";
+// 資料: species.json(追蹤清單,由 bot 從私有設定產生)、prices.json(每月更新的參考價格)、
+// 目擊則在打開網頁時直接向 iNaturalist API 抓,所以永遠是最新的。網頁不送出任何資料,定位也只在本機使用。
+const API = "https://api.inaturalist.org/v2/observations";
+const FIELDS = "(id:!t,observed_on:!t,location:!t,obscured:!t,place_guess:!t,faves_count:!t,quality_grade:!t," +
+  "user:(login:!t),taxon:(id:!t,name:!t,preferred_common_name:!t,ancestor_ids:!t),photos:(url:!t))";
+const COLORS = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#1f78b4", "#666666", "#b2182b"];
+const MAX_PAGES = 30;
+
+const S = { species: [], groups: [], byId: new Map(), prices: {}, priceMeta: {}, obs: [], days: 30,
+            off: new Set(), focus: null, colors: {} };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---------- 地圖 ----------
+const map = L.map("map", { zoomControl: true, preferCanvas: true }).setView([-37.2, 144.9], 7);
+// OpenStreetMap 標準底圖(不需金鑰);深色模式用 CSS 把底圖反轉成暗色
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · 資料 <a href="https://www.inaturalist.org">iNaturalist</a>' }).addTo(map);
+const cluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 42, spiderfyOnMaxZoom: true,
+  iconCreateFunction: (c) => { const n = c.getChildCount(); const d = n < 10 ? 30 : n < 100 ? 36 : 44;
+    return L.divIcon({ html: `<div class="cl" style="width:${d}px;height:${d}px">${n}</div>`, className: "", iconSize: [d, d] }); } });
+map.addLayer(cluster);
+let me = null;
+// 彈出視窗若被上方標題列蓋住,把地圖往下移到看得見(Leaflet 的自動移位在縮放動畫後有時不夠)
+map.on("popupopen", (e) => setTimeout(() => {
+  const r = e.popup.getElement().getBoundingClientRect(), need = topSpace() - r.top;
+  if (need > 0) map.panBy([0, -need]);
+}, 350));
+// 上方標題列的高度:縮放與彈出視窗都要避開它
+const topSpace = () => document.querySelector(".bar").getBoundingClientRect().bottom + 8;
+const fitOpts = (maxZoom) => ({ maxZoom, paddingTopLeft: [24, topSpace()], paddingBottomRight: [24, 70] });
+
+// ---------- 載入 ----------
+async function loadJSON(path) {
+  const r = await fetch(`${path}?v=${Math.floor(Date.now() / 3600000)}`); // 每小時換一次,避免瀏覽器一直用舊檔
+  if (!r.ok) throw new Error(`${path} ${r.status}`);
+  return r.json();
+}
+
+async function loadObservations(cfg) {
+  const d1 = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+  const ids = cfg.species.map((s) => s.taxon_id).join(",");
+  let below = null, all = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const p = new URLSearchParams({ taxon_id: ids, place_id: cfg.place_id, d1, captive: "false", quality_grade: cfg.quality_grades.join(","),
+      per_page: 200, order_by: "id", order: "desc", locale: "zh-TW", fields: FIELDS });
+    if (below) p.set("id_below", below);
+    let r;
+    for (let tryN = 0; tryN < 3; tryN++) {  // iNat 偶爾回 429/5xx,稍等再試
+      r = await fetch(`${API}?${p}`);
+      if (r.ok) break;
+      await sleep(2000 * (tryN + 1));
+    }
+    if (!r.ok) throw new Error(`iNaturalist ${r.status}`);
+    const res = (await r.json()).results || [];
+    all = all.concat(res);
+    setStatus(`載入中… ${all.length} 筆`);
+    if (res.length < 200) break;
+    below = res[res.length - 1].id;
+    await sleep(1000); // iNat 建議每分鐘不超過 60 次請求
+  }
+  return all;
+}
+
+// 目擊屬於哪個追蹤分類: 取祖先鏈中最深(最具體)的那個追蹤 id
+function trackedOf(o) {
+  const anc = (o.taxon && o.taxon.ancestor_ids) || [];
+  for (let i = anc.length - 1; i >= 0; i--) if (S.byId.has(anc[i])) return S.byId.get(anc[i]);
+  return null;
+}
+
+async function init() {
+  try {
+    const [cfg, prices] = await Promise.all([loadJSON("species.json"), loadJSON("prices.json").catch(() => ({ items: {} }))]);
+    S.species = cfg.species; S.groups = cfg.groups; S.prices = prices.items || {}; S.priceMeta = prices;
+    S.groups.forEach((g, i) => (S.colors[g.name] = COLORS[i % COLORS.length]));
+    cfg.species.forEach((s) => S.byId.set(s.taxon_id, s));
+    buildChips();
+    const raw = await loadObservations(cfg);
+    S.obs = raw.map((o) => ({ o, t: trackedOf(o) })).filter((x) => x.t && x.o.location);
+    $("msg").classList.remove("on");
+    render(true);
+  } catch (e) {
+    showMsg(`載入失敗(${esc(e.message)})`, true);
+    setStatus("載入失敗");
+  }
+}
+
+// ---------- 畫面 ----------
+function setStatus(t) { $("status").textContent = t; }
+function showMsg(html, retry) {
+  $("msg").innerHTML = html + (retry ? '<button id="retry">重試</button>' : "");
+  $("msg").classList.add("on");
+  if (retry) $("retry").onclick = () => { $("msg").classList.remove("on"); init(); };
+}
+
+function buildChips() {
+  const box = $("chips");
+  box.querySelectorAll(".chip").forEach((c) => c.remove());
+  for (const g of S.groups) {
+    const b = document.createElement("button");
+    b.className = "chip"; b.dataset.group = g.name; b.setAttribute("aria-pressed", "true");
+    b.innerHTML = `<span class="dot" style="background:${S.colors[g.name]}"></span>${esc(g.icon)} ${esc(g.name)} <span class="n"></span>`;
+    b.onclick = () => { S.off.has(g.name) ? S.off.delete(g.name) : S.off.add(g.name); render(false); };
+    box.appendChild(b);
+  }
+}
+
+function inWindow(x) {
+  const cut = new Date(Date.now() - S.days * 864e5).toISOString().slice(0, 10);
+  return (x.o.observed_on || "") >= cut;
+}
+
+function visible() {
+  return S.obs.filter((x) => inWindow(x) && !S.off.has(x.t.group) && (!S.focus || x.t.taxon_id === S.focus));
+}
+
+function popup(x) {
+  const o = x.o, t = o.taxon || {};
+  const photo = o.photos && o.photos[0] && o.photos[0].url ? o.photos[0].url.replace("square", "medium") : "";
+  const name = t.preferred_common_name ? `${esc(t.preferred_common_name)} <span class="sci">${esc(t.name)}</span>` : `<span class="sci">${esc(t.name)}</span>`;
+  return `<div class="pop">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : ""}
+    <div class="sp">${name}</div>
+    <div class="meta">${esc(x.t.group)} · ${esc(x.t.name)}${x.t.zh ? `(${esc(x.t.zh)})` : ""}</div>
+    <div class="meta">📅 ${esc(o.observed_on || "?")} · ${o.quality_grade === "research" ? "研究級" : "待鑑定"}${o.faves_count ? ` · ★ ${o.faves_count}` : ""}</div>
+    <div class="meta">📍 ${esc((o.place_guess || "未知地點").split(",").slice(0, 2).join(","))}${o.obscured ? "(座標已模糊化)" : ""}</div>
+    <div class="meta" style="margin-top:6px"><a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">在 iNaturalist 查看 →</a></div></div>`;
+}
+
+function render(fit) {
+  const vis = visible();
+  cluster.clearLayers();
+  const layers = vis.map((x) => {
+    const [lat, lng] = x.o.location.split(",").map(Number);
+    return L.circleMarker([lat, lng], { radius: 7, weight: 1.5, color: "#ffffff", fillColor: S.colors[x.t.group], fillOpacity: x.o.obscured ? 0.55 : 0.95,
+      dashArray: x.o.obscured ? "3 3" : null }).bindPopup(() => popup(x), { maxWidth: 270, autoPanPaddingTopLeft: L.point(16, topSpace() + 10), autoPanPaddingBottomRight: L.point(16, 72) });
+  });
+  cluster.addLayers(layers);
+  if (fit && layers.length) map.fitBounds(L.featureGroup(layers).getBounds(), fitOpts(11));
+
+  // 類群篩選的數字(目前時間範圍內)
+  const inRange = S.obs.filter(inWindow);
+  document.querySelectorAll(".chip").forEach((c) => {
+    const g = c.dataset.group;
+    c.classList.toggle("off", S.off.has(g)); c.setAttribute("aria-pressed", String(!S.off.has(g)));
+    c.querySelector(".n").textContent = inRange.filter((x) => x.t.group === g).length;
+  });
+  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.days === S.days)));
+  const focusSp = S.focus && S.byId.get(S.focus);
+  $("focus").classList.toggle("on", !!focusSp);
+  if (focusSp) $("focusText").innerHTML = `只顯示 <i>${esc(focusSp.name)}</i>${focusSp.zh ? `(${esc(focusSp.zh)})` : ""}`;
+  setStatus(`近 ${S.days} 天 · ${vis.length} 筆 · ${new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })} 更新`);
+  renderList();
+}
+
+function priceHtml(id) {
+  const p = S.prices[String(id)];
+  if (!p) return `參考價格:<span class="none">無</span>`;
+  return `參考價格:<b>${esc(p.price)}</b> · ${esc(p.source)} ${esc(p.date)}<br>${esc(p.detail || "")}`;
+}
+
+function renderList() {
+  const q = $("search").value.trim().toLowerCase();
+  const counts = new Map();
+  S.obs.filter(inWindow).forEach((x) => counts.set(x.t.taxon_id, (counts.get(x.t.taxon_id) || 0) + 1));
+  let html = "";
+  for (const g of S.groups) {
+    const rows = S.species.filter((s) => s.group === g.name && (!q || s.name.toLowerCase().includes(q) || (s.zh || "").includes(q)))
+      .sort((a, b) => (counts.get(b.taxon_id) || 0) - (counts.get(a.taxon_id) || 0) || a.name.localeCompare(b.name));
+    if (!rows.length) continue;
+    html += `<div class="grp"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:${S.colors[g.name]}"></span>${esc(g.icon)} ${esc(g.name)}</div>`;
+    for (const s of rows) {
+      const n = counts.get(s.taxon_id) || 0;
+      html += `<button class="row" data-id="${s.taxon_id}"><span><span class="nm">${esc(s.name)}</span>${s.zh ? `<span class="zh">${esc(s.zh)}</span>` : ""}</span>
+        <span class="cnt">${n ? `${n} 筆` : "—"}</span><span class="pr">${priceHtml(s.taxon_id)}</span></button>`;
+    }
+  }
+  $("list").innerHTML = html || '<div class="grp">找不到符合的物種</div>';
+  $("list").querySelectorAll(".row").forEach((r) => (r.onclick = () => focusOn(+r.dataset.id)));
+  const m = S.priceMeta;
+  $("priceNote").textContent = `價格更新:${m.updated || "—"}(${m.next_update || "每月"})。${m.note || ""}`;
+}
+
+function focusOn(id) {
+  S.focus = id; S.off.clear();
+  render(false);
+  const pts = visible().map((x) => x.o.location.split(",").map(Number));
+  if (pts.length) map.fitBounds(L.latLngBounds(pts), fitOpts(12));
+  else showMsg("這個物種近期沒有目擊紀錄");
+  if (innerWidth < 700) toggleDrawer(false);
+}
+
+function toggleDrawer(open) {
+  $("drawer").classList.toggle("open", open);
+  $("openCatalog").setAttribute("aria-expanded", String(open));
+  if (open) renderList();
+}
+
+// ---------- 事件 ----------
+document.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => { S.days = +b.dataset.days; render(false); }));
+$("clearFocus").onclick = () => { S.focus = null; render(true); };
+$("openCatalog").onclick = () => toggleDrawer(!$("drawer").classList.contains("open"));
+$("closeCatalog").onclick = () => toggleDrawer(false);
+$("search").oninput = renderList;
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleDrawer(false); });
+$("locate").onclick = () => {
+  if (!navigator.geolocation) return showMsg("這個瀏覽器不支援定位");
+  navigator.geolocation.getCurrentPosition((p) => {
+    const ll = [p.coords.latitude, p.coords.longitude];
+    if (me) me.setLatLng(ll); else me = L.circleMarker(ll, { radius: 8, color: "#fff", weight: 3, fillColor: "#2b7bff", fillOpacity: 1 }).addTo(map);
+    map.setView(ll, 11);
+  }, () => showMsg("無法取得位置(可能未允許定位)"), { enableHighAccuracy: false, timeout: 10000 });
+};
+
+init();
+</script>
+</body>
+</html>

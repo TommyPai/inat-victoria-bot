@@ -15,3 +15,11 @@
 2. Worker 加三個 Secret:`TG_WEBHOOK_SECRET`、`QUEUE_SECRET`(兩個隨機長字串)、`GH_TOKEN`(只限這個 repo、Actions 讀寫的 fine-grained token)。
 3. 這個 repo 加三個 secrets:`TG_QUEUE_URL`(Worker 網址)、`TG_QUEUE_SECRET`、`TG_WEBHOOK_SECRET`(和 Worker 的相同)。
 4. 下一次執行時 bot 會自動向 Telegram 設定 webhook;之後定時觸發只是備援。刪掉 `TG_QUEUE_URL` 就會自動關閉 webhook、改回輪詢。
+
+## 目擊地圖(GitHub Pages)
+
+`docs/` 是一個靜態網頁:地圖顯示追蹤物種在維多利亞近 30 天的目擊(打開網頁時直接向 iNaturalist API 抓,永遠是最新的),左下角「目錄」列出各物種與市場參考價格。
+
+- `docs/species.json`:追蹤清單,由 bot 每次執行時從私有設定產生(`publish_species.py`),只含學名、中文名與類群。
+- `docs/prices.json`:市場參考價格,每月更新一次;沒有查到價格的物種顯示「無」。
+- 啟用方式:repo Settings → Pages → Build and deployment → Deploy from a branch → `main` / `/docs`。

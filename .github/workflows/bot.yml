@@ -4,7 +4,7 @@ on:
   workflow_dispatch:   # 由 cron-job.org 每 2 分鐘觸發(GitHub 自己的排程目前不可靠);啟用 webhook 後 Cloudflare Worker 收到訊息也會立刻觸發
 
 permissions:
-  contents: read
+  contents: write   # 只用來把地圖的物種清單 docs/species.json 推回這個 repo
 
 concurrency:
   group: telegram-bot
@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 4
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+        with:
+          ref: ${{ github.ref }}  # 排隊等前一次跑完後,取分支最新版本
       - name: Fetch tracker code and config (private repo)
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
         with:
@@ -38,3 +40,13 @@ jobs:
           TG_QUEUE_SECRET: ${{ secrets.TG_QUEUE_SECRET }}
           TG_WEBHOOK_SECRET: ${{ secrets.TG_WEBHOOK_SECRET }}
         run: python bot.py
+      - name: Publish species list for the map
+        run: |
+          python publish_species.py
+          if ! git diff --quiet -- docs/species.json; then
+            git config user.name "inat-bot"
+            git config user.email "inat-bot@users.noreply.github.com"
+            git add docs/species.json
+            git commit -q -m "map: update species list"
+            git push -q origin "HEAD:$GITHUB_REF_NAME" || echo "::warning::物種清單推送失敗,下一次執行會再試"
+          fi
