@@ -176,6 +176,17 @@ map.on("popupopen", (e) => setTimeout(() => {
 // 上方標題列的高度:縮放與彈出視窗都要避開它
 const topSpace = () => document.querySelector(".bar").getBoundingClientRect().bottom + 8;
 const fitOpts = (maxZoom) => ({ maxZoom, paddingTopLeft: [24, topSpace()], paddingBottomRight: [24, 70] });
+// 網頁剛打開時,地圖容器的大小有時還沒確定(例如分頁在背景、手機轉向);那時縮放會算錯而放大到上限。
+// 先記下要縮放的範圍,等容器有正常大小再做,之後大小改變也會重新校正。
+let pendingFit = null;
+function fitTo(bounds, maxZoom) {
+  map.invalidateSize();
+  const sz = map.getSize();
+  if (sz.x < 200 || sz.y < 200) { pendingFit = [bounds, maxZoom]; return; }
+  pendingFit = null;
+  map.fitBounds(bounds, fitOpts(maxZoom));
+}
+new ResizeObserver(() => { map.invalidateSize(); if (pendingFit) fitTo(...pendingFit); }).observe(document.getElementById("map"));
 
 // ---------- 載入 ----------
 async function loadJSON(path) {
@@ -283,7 +294,7 @@ function render(fit) {
       dashArray: x.o.obscured ? "3 3" : null }).bindPopup(() => popup(x), { maxWidth: 270, autoPanPaddingTopLeft: L.point(16, topSpace() + 10), autoPanPaddingBottomRight: L.point(16, 72) });
   });
   cluster.addLayers(layers);
-  if (fit && layers.length) map.fitBounds(L.featureGroup(layers).getBounds(), fitOpts(11));
+  if (fit && layers.length) fitTo(L.latLngBounds(vis.map((x) => x.o.location.split(",").map(Number))), 11);
 
   // 類群篩選的數字(目前時間範圍內)
   const inRange = S.obs.filter(inWindow);
@@ -332,7 +343,7 @@ function focusOn(id) {
   S.focus = id; S.off.clear();
   render(false);
   const pts = visible().map((x) => x.o.location.split(",").map(Number));
-  if (pts.length) map.fitBounds(L.latLngBounds(pts), fitOpts(12));
+  if (pts.length) fitTo(L.latLngBounds(pts), 12);
   else showMsg("這個物種近期沒有目擊紀錄");
   if (innerWidth < 700) toggleDrawer(false);
 }
