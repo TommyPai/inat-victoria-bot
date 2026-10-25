@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>維多利亞甲蟲地圖</title>
-<meta name="description" content="維多利亞州追蹤物種近 30 天的 iNaturalist 目擊地圖,附市場參考價格">
+<title>Victorian Beetle Map</title>
+<meta name="description" content="iNaturalist sightings of tracked beetles and other insects in Victoria, Australia over the last 30 days, with reference market prices">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪲</text></svg>">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
@@ -46,6 +46,7 @@
     border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .chip .dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
   .chip.off { background: var(--chip-off); color: var(--muted); }
+  .chip.all { font-weight: 600; border-style: dashed; }
   .chip.off .dot { opacity: .3; }
   .chip .n { color: var(--muted); font-variant-numeric: tabular-nums; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; flex: none; }
@@ -110,29 +111,29 @@
 </style>
 </head>
 <body>
-<div id="map" role="application" aria-label="目擊地圖"></div>
+<div id="map" role="application" aria-label="Sightings map"></div>
 
 <div class="top">
   <div class="bar">
-    <div class="title"><h1>🪲 維多利亞甲蟲地圖</h1><span class="status" id="status">載入中…</span></div>
+    <div class="title"><h1>🪲 Victorian Beetle Map</h1><span class="status" id="status">Loading…</span></div>
     <div class="chips" id="chips">
-      <span class="seg" role="group" aria-label="時間範圍">
-        <button data-days="7" aria-pressed="false">7 天</button><button data-days="30" aria-pressed="true">30 天</button>
+      <span class="seg" role="group" aria-label="Time range">
+        <button data-days="7" aria-pressed="false">7 days</button><button data-days="30" aria-pressed="true">30 days</button>
       </span>
     </div>
-    <div class="focus" id="focus"><span id="focusText"></span><button id="clearFocus">顯示全部</button></div>
+    <div class="focus" id="focus"><span id="focusText"></span><button id="clearFocus">Show all</button></div>
   </div>
 </div>
 
 <div class="fab">
-  <button id="openCatalog" aria-expanded="false" aria-controls="drawer">📋 目錄</button>
-  <button id="locate" class="icon" title="我的位置" aria-label="顯示我的位置">📍</button>
+  <button id="openCatalog" aria-expanded="false" aria-controls="drawer">📋 Catalog</button>
+  <button id="locate" class="icon" title="My location" aria-label="Show my location">📍</button>
 </div>
 
-<section class="drawer" id="drawer" aria-label="物種目錄與參考價格">
+<section class="drawer" id="drawer" aria-label="Species catalog and reference prices">
   <header>
-    <h2><span>物種目錄 · 參考價格</span><button id="closeCatalog" aria-label="關閉">×</button></h2>
-    <input id="search" type="search" placeholder="搜尋學名或中文名" autocomplete="off">
+    <h2><span>Species · Reference prices</span><button id="closeCatalog" aria-label="Close">×</button></h2>
+    <input id="search" type="search" placeholder="Search scientific or common name" autocomplete="off">
   </header>
   <div class="list" id="list"></div>
   <div class="note" id="priceNote"></div>
@@ -151,9 +152,14 @@ const FIELDS = "(id:!t,observed_on:!t,location:!t,obscured:!t,place_guess:!t,fav
   "user:(login:!t),taxon:(id:!t,name:!t,preferred_common_name:!t,ancestor_ids:!t),photos:(url:!t))";
 const COLORS = ["#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02", "#a6761d", "#1f78b4", "#666666", "#b2182b"];
 const MAX_PAGES = 30;
+// 類群的英文名稱(species.json 裡是中文)
+const GROUP_EN = { "金龜": "Scarabs", "吉丁蟲": "Jewel beetles", "鍬形蟲": "Stag beetles", "步行蟲": "Ground beetles", "天牛": "Longhorns",
+  "象鼻蟲": "Weevils", "擬步行蟲": "Darkling beetles", "竹節蟲": "Stick insects", "蟬": "Cicadas", "螳螂": "Mantises", "蛾蝶": "Moths & butterflies",
+  "螽斯": "Katydids", "其他": "Other" };
+const gname = (g) => GROUP_EN[g] || g;
 
 const S = { species: [], groups: [], byId: new Map(), prices: {}, priceMeta: {}, obs: [], days: 30,
-            off: new Set(), focus: null, colors: {} };
+            off: new Set(), focus: null, colors: {}, en: new Map() };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -162,7 +168,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const map = L.map("map", { zoomControl: true, preferCanvas: true }).setView([-37.2, 144.9], 7);
 // OpenStreetMap 標準底圖(不需金鑰);深色模式用 CSS 把底圖反轉成暗色
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · 資料 <a href="https://www.inaturalist.org">iNaturalist</a>' }).addTo(map);
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Data <a href="https://www.inaturalist.org">iNaturalist</a>' }).addTo(map);
 const cluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 42, spiderfyOnMaxZoom: true,
   iconCreateFunction: (c) => { const n = c.getChildCount(); const d = n < 10 ? 30 : n < 100 ? 36 : 44;
     return L.divIcon({ html: `<div class="cl" style="width:${d}px;height:${d}px">${n}</div>`, className: "", iconSize: [d, d] }); } });
@@ -201,7 +207,7 @@ async function loadObservations(cfg) {
   let below = null, all = [];
   for (let page = 0; page < MAX_PAGES; page++) {
     const p = new URLSearchParams({ taxon_id: ids, place_id: cfg.place_id, d1, captive: "false", quality_grade: cfg.quality_grades.join(","),
-      per_page: 200, order_by: "id", order: "desc", locale: "zh-TW", fields: FIELDS });
+      per_page: 200, order_by: "id", order: "desc", locale: "en", fields: FIELDS });
     if (below) p.set("id_below", below);
     let r;
     for (let tryN = 0; tryN < 3; tryN++) {  // iNat 偶爾回 429/5xx,稍等再試
@@ -212,7 +218,7 @@ async function loadObservations(cfg) {
     if (!r.ok) throw new Error(`iNaturalist ${r.status}`);
     const res = (await r.json()).results || [];
     all = all.concat(res);
-    setStatus(`載入中… ${all.length} 筆`);
+    setStatus(`Loading… ${all.length} sightings`);
     if (res.length < 200) break;
     below = res[res.length - 1].id;
     await sleep(1000); // iNat 建議每分鐘不超過 60 次請求
@@ -227,6 +233,16 @@ function trackedOf(o) {
   return null;
 }
 
+async function loadEnglishNames(ids) {
+  for (let i = 0; i < ids.length; i += 30) {
+    try {
+      const r = await fetch(`https://api.inaturalist.org/v2/taxa/${ids.slice(i, i + 30).join(",")}?locale=en&fields=(id:!t,preferred_common_name:!t)`);
+      if (!r.ok) continue;
+      for (const t of (await r.json()).results || []) if (t.preferred_common_name) S.en.set(t.id, t.preferred_common_name);
+    } catch (e) { /* 俗名只是輔助,失敗就只顯示學名 */ }
+  }
+}
+
 async function init() {
   try {
     const [cfg, prices] = await Promise.all([loadJSON("species.json"), loadJSON("prices.json").catch(() => ({ items: {} }))]);
@@ -234,20 +250,20 @@ async function init() {
     S.groups.forEach((g, i) => (S.colors[g.name] = COLORS[i % COLORS.length]));
     cfg.species.forEach((s) => S.byId.set(s.taxon_id, s));
     buildChips();
-    const raw = await loadObservations(cfg);
+    const [raw] = await Promise.all([loadObservations(cfg), loadEnglishNames(cfg.species.map((s) => s.taxon_id))]);
     S.obs = raw.map((o) => ({ o, t: trackedOf(o) })).filter((x) => x.t && x.o.location);
     $("msg").classList.remove("on");
     render(true);
   } catch (e) {
-    showMsg(`載入失敗(${esc(e.message)})`, true);
-    setStatus("載入失敗");
+    showMsg(`Couldn’t load the data (${esc(e.message)})`, true);
+    setStatus("Failed to load");
   }
 }
 
 // ---------- 畫面 ----------
 function setStatus(t) { $("status").textContent = t; }
 function showMsg(html, retry) {
-  $("msg").innerHTML = html + (retry ? '<button id="retry">重試</button>' : "");
+  $("msg").innerHTML = html + (retry ? '<button id="retry">Retry</button>' : "");
   $("msg").classList.add("on");
   if (retry) $("retry").onclick = () => { $("msg").classList.remove("on"); init(); };
 }
@@ -255,10 +271,14 @@ function showMsg(html, retry) {
 function buildChips() {
   const box = $("chips");
   box.querySelectorAll(".chip").forEach((c) => c.remove());
+  const all = document.createElement("button");
+  all.className = "chip all"; all.id = "toggleAll";
+  all.onclick = () => { if (S.off.size === 0) S.groups.forEach((g) => S.off.add(g.name)); else S.off.clear(); render(false); };
+  box.appendChild(all);
   for (const g of S.groups) {
     const b = document.createElement("button");
     b.className = "chip"; b.dataset.group = g.name; b.setAttribute("aria-pressed", "true");
-    b.innerHTML = `<span class="dot" style="background:${S.colors[g.name]}"></span>${esc(g.icon)} ${esc(g.name)} <span class="n"></span>`;
+    b.innerHTML = `<span class="dot" style="background:${S.colors[g.name]}"></span>${esc(g.icon)} ${esc(gname(g.name))} <span class="n"></span>`;
     b.onclick = () => { S.off.has(g.name) ? S.off.delete(g.name) : S.off.add(g.name); render(false); };
     box.appendChild(b);
   }
@@ -279,10 +299,10 @@ function popup(x) {
   const name = t.preferred_common_name ? `${esc(t.preferred_common_name)} <span class="sci">${esc(t.name)}</span>` : `<span class="sci">${esc(t.name)}</span>`;
   return `<div class="pop">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : ""}
     <div class="sp">${name}</div>
-    <div class="meta">${esc(x.t.group)} · ${esc(x.t.name)}${x.t.zh ? `(${esc(x.t.zh)})` : ""}</div>
-    <div class="meta">📅 ${esc(o.observed_on || "?")} · ${o.quality_grade === "research" ? "研究級" : "待鑑定"}${o.faves_count ? ` · ★ ${o.faves_count}` : ""}</div>
-    <div class="meta">📍 ${esc((o.place_guess || "未知地點").split(",").slice(0, 2).join(","))}${o.obscured ? "(座標已模糊化)" : ""}</div>
-    <div class="meta" style="margin-top:6px"><a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">在 iNaturalist 查看 →</a></div></div>`;
+    <div class="meta">${esc(gname(x.t.group))} · <i>${esc(x.t.name)}</i>${S.en.get(x.t.taxon_id) ? ` (${esc(S.en.get(x.t.taxon_id))})` : ""}</div>
+    <div class="meta">📅 ${esc(o.observed_on || "?")} · ${o.quality_grade === "research" ? "Research grade" : "Needs ID"}${o.faves_count ? ` · ★ ${o.faves_count}` : ""}</div>
+    <div class="meta">📍 ${esc((o.place_guess || "Unknown location").split(",").slice(0, 2).join(","))}${o.obscured ? " (location obscured)" : ""}</div>
+    <div class="meta" style="margin-top:6px"><a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">View on iNaturalist →</a></div></div>`;
 }
 
 function render(fit) {
@@ -298,7 +318,10 @@ function render(fit) {
 
   // 類群篩選的數字(目前時間範圍內)
   const inRange = S.obs.filter(inWindow);
-  document.querySelectorAll(".chip").forEach((c) => {
+  const allOn = S.off.size === 0;
+  $("toggleAll").textContent = allOn ? "Clear all" : "Select all";
+  $("toggleAll").setAttribute("aria-label", allOn ? "Hide all groups" : "Show all groups");
+  document.querySelectorAll(".chip[data-group]").forEach((c) => {
     const g = c.dataset.group;
     c.classList.toggle("off", S.off.has(g)); c.setAttribute("aria-pressed", String(!S.off.has(g)));
     c.querySelector(".n").textContent = inRange.filter((x) => x.t.group === g).length;
@@ -306,15 +329,15 @@ function render(fit) {
   document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.days === S.days)));
   const focusSp = S.focus && S.byId.get(S.focus);
   $("focus").classList.toggle("on", !!focusSp);
-  if (focusSp) $("focusText").innerHTML = `只顯示 <i>${esc(focusSp.name)}</i>${focusSp.zh ? `(${esc(focusSp.zh)})` : ""}`;
-  setStatus(`近 ${S.days} 天 · ${vis.length} 筆 · ${new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })} 更新`);
+  if (focusSp) $("focusText").innerHTML = `Showing only <i>${esc(focusSp.name)}</i>${S.en.get(focusSp.taxon_id) ? ` (${esc(S.en.get(focusSp.taxon_id))})` : ""}`;
+  setStatus(`Last ${S.days} days · ${vis.length} sightings · updated ${new Date().toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}`);
   renderList();
 }
 
 function priceHtml(id) {
   const p = S.prices[String(id)];
-  if (!p) return `參考價格:<span class="none">無</span>`;
-  return `參考價格:<b>${esc(p.price)}</b> · ${esc(p.source)} ${esc(p.date)}<br>${esc(p.detail || "")}`;
+  if (!p) return `Reference price: <span class="none">None</span>`;
+  return `Reference price: <b>${esc(p.price)}</b> · ${esc(p.source)}, ${esc(p.date)}<br>${esc(p.detail || "")}`;
 }
 
 function renderList() {
@@ -323,20 +346,20 @@ function renderList() {
   S.obs.filter(inWindow).forEach((x) => counts.set(x.t.taxon_id, (counts.get(x.t.taxon_id) || 0) + 1));
   let html = "";
   for (const g of S.groups) {
-    const rows = S.species.filter((s) => s.group === g.name && (!q || s.name.toLowerCase().includes(q) || (s.zh || "").includes(q)))
+    const rows = S.species.filter((s) => s.group === g.name && (!q || s.name.toLowerCase().includes(q) || (S.en.get(s.taxon_id) || "").toLowerCase().includes(q)))
       .sort((a, b) => (counts.get(b.taxon_id) || 0) - (counts.get(a.taxon_id) || 0) || a.name.localeCompare(b.name));
     if (!rows.length) continue;
-    html += `<div class="grp"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:${S.colors[g.name]}"></span>${esc(g.icon)} ${esc(g.name)}</div>`;
+    html += `<div class="grp"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:${S.colors[g.name]}"></span>${esc(g.icon)} ${esc(gname(g.name))}</div>`;
     for (const s of rows) {
       const n = counts.get(s.taxon_id) || 0;
-      html += `<button class="row" data-id="${s.taxon_id}"><span><span class="nm">${esc(s.name)}</span>${s.zh ? `<span class="zh">${esc(s.zh)}</span>` : ""}</span>
-        <span class="cnt">${n ? `${n} 筆` : "—"}</span><span class="pr">${priceHtml(s.taxon_id)}</span></button>`;
+      html += `<button class="row" data-id="${s.taxon_id}"><span><span class="nm">${esc(s.name)}</span>${S.en.get(s.taxon_id) ? `<span class="zh">${esc(S.en.get(s.taxon_id))}</span>` : ""}</span>
+        <span class="cnt">${n ? `${n} sighting${n > 1 ? "s" : ""}` : "—"}</span><span class="pr">${priceHtml(s.taxon_id)}</span></button>`;
     }
   }
-  $("list").innerHTML = html || '<div class="grp">找不到符合的物種</div>';
+  $("list").innerHTML = html || '<div class="grp">No matching species</div>';
   $("list").querySelectorAll(".row").forEach((r) => (r.onclick = () => focusOn(+r.dataset.id)));
   const m = S.priceMeta;
-  $("priceNote").textContent = `價格更新:${m.updated || "—"}(${m.next_update || "每月"})。${m.note || ""}`;
+  $("priceNote").textContent = `Prices checked ${m.updated || "—"} (${m.next_update || "monthly"}). ${m.note || ""}`;
 }
 
 function focusOn(id) {
@@ -344,7 +367,7 @@ function focusOn(id) {
   render(false);
   const pts = visible().map((x) => x.o.location.split(",").map(Number));
   if (pts.length) fitTo(L.latLngBounds(pts), 12);
-  else showMsg("這個物種近期沒有目擊紀錄");
+  else showMsg("No recent sightings of this taxon");
   if (innerWidth < 700) toggleDrawer(false);
 }
 
@@ -362,12 +385,12 @@ $("closeCatalog").onclick = () => toggleDrawer(false);
 $("search").oninput = renderList;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleDrawer(false); });
 $("locate").onclick = () => {
-  if (!navigator.geolocation) return showMsg("這個瀏覽器不支援定位");
+  if (!navigator.geolocation) return showMsg("Location isn’t available in this browser");
   navigator.geolocation.getCurrentPosition((p) => {
     const ll = [p.coords.latitude, p.coords.longitude];
     if (me) me.setLatLng(ll); else me = L.circleMarker(ll, { radius: 8, color: "#fff", weight: 3, fillColor: "#2b7bff", fillOpacity: 1 }).addTo(map);
     map.setView(ll, 11);
-  }, () => showMsg("無法取得位置(可能未允許定位)"), { enableHighAccuracy: false, timeout: 10000 });
+  }, () => showMsg("Couldn’t get your location (location permission may be off)"), { enableHighAccuracy: false, timeout: 10000 });
 };
 
 init();

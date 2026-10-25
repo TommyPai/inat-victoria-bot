@@ -1,19 +1,97 @@
 {
- "updated": "2026-10-08",
- "next_update": "每月 1 日",
- "note": "市場上看到的標本價格,只供參考,不代表成交價。拍賣價是當時的競標現價,不含運費。澳洲原生昆蟲的採集與出口受法規管制。",
+ "updated": "2026-10-26",
+ "next_update": "next check on the 1st of each month",
+ "note": "Prices seen on Yahoo! Auctions Japan (yen; 'sold' means the closing price in roughly the last four months) and eBay (US$), Australian-origin specimens only. For reference only, shipping not included. Collecting and exporting native Australian insects is regulated.",
  "items": {
-  "201869": {
-   "price": "5,000–8,000 円/對",
-   "detail": "日本雅虎拍賣 3 筆「オーストラリア産 クリスマスビートル ペア」競標中:5,000、6,500、8,000 円。賣家沒寫種名與產地州。",
-   "source": "Yahoo!オークション",
-   "date": "2026-10-08"
-  },
   "332345": {
-   "price": "3,000–5,000 円/隻",
-   "detail": "日本雅虎拍賣競標中:Temognatha tibialis 41mm 3,000 円、T. pictipes 約 29mm 5,000 円。",
-   "source": "Yahoo!オークション",
-   "date": "2026-10-08"
+   "price": "¥3,000–17,980 each",
+   "detail": "Yahoo sold (Jun–Oct): T. tibialis 41 mm ¥4,500, T. ducalis ~41 mm ¥7,000, T. pictipes ~29 mm ¥5,000, T. carpentariae ¥17,980. Listed now: T. mniszechi ~35 mm ¥12,000, T. variabilis 31 mm ¥9,800. eBay: T. secularis, T. brucki, T. variabilis US$30–75 (Buy It Now).",
+   "source": "Yahoo! Auctions JP, eBay",
+   "date": "2026-10-26"
+  },
+  "201869": {
+   "price": "¥5,000–9,999 each or pair",
+   "detail": "Yahoo sold: golden Christmas beetle pair ¥6,500, Anoplognathus sp. ¥7,980, A. porosus ¥310 (¥1 start). Listed now (Australian, species often not named): pairs ¥5,000–7,000, singles ¥8,888–9,999.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "333300": {
+   "price": "¥9,800–17,800 each",
+   "detail": "Yahoo sold: Stigmodera roei ¥9,800 (Jul). Listed now: S. gratiosa (ID uncertain) ¥17,800.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "471839": {
+   "price": "¥25,000–40,000 each",
+   "detail": "Ceratognathus niger: sold ¥40,000 (Oct 17); another listed now at ¥25,000 bid / ¥40,000 buy-now. Seller calls it a rarity.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "447681": {
+   "price": "¥80,000 each",
+   "detail": "Lissotes distinctus from Tasmania, sold ¥80,000 (Jun, tarsus missing).",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "333313": {
+   "price": "¥800–1,400 each",
+   "detail": "Yahoo sold (Aug): C. pallidiventris ¥1,400, C. inconspicua ¥800.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "333327": {
+   "price": "¥39,800 each",
+   "detail": "Calotemognatha varicollis sold ¥39,800 (Jun).",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "574763": {
+   "price": "¥13,800–39,800 each",
+   "detail": "Yahoo sold (Jun–Aug): A. hystrix (WA) ¥39,800, Acantholophus spp. ¥14,980–29,800. Listed now: A. suturalis 18 mm ¥13,800.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "332335": {
+   "price": "¥49,800 each",
+   "detail": "Blackburnium cf. angulicorne sold ¥49,800 (Sep).",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "122636": {
+   "price": "¥16,000–33,500 each",
+   "detail": "Omorgus ~25 mm: sold ¥33,500 after 9 bids (Oct 10); another listed now at ¥16,000.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "1180701": {
+   "price": "¥29,800 each",
+   "detail": "Hemichnoodes mniszechii 37 mm (Australia) listed now at ¥29,800.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "141860": {
+   "price": "¥1,000–1,800 per 30–50 eggs",
+   "detail": "Live eggs, not specimens. Yahoo sold Aug–Oct: 30 eggs ¥1,000–1,601, 50 eggs ¥1,699–1,800, 100 eggs ¥3,100.",
+   "source": "Yahoo! Auctions JP",
+   "date": "2026-10-26"
+  },
+  "546507": {
+   "price": "US$74 each",
+   "detail": "eBay: Trichaulax macleayi (Mt Garnet, Qld) listed at US$73.93 opening bid, no bids yet.",
+   "source": "eBay",
+   "date": "2026-10-26"
+  },
+  "341893": {
+   "price": "US$40 each",
+   "detail": "eBay: Chondropyga dorsalis (cowboy beetle) US$39.99 Buy It Now.",
+   "source": "eBay",
+   "date": "2026-10-26"
+  },
+  "1069673": {
+   "price": "US$74 each",
+   "detail": "eBay: Trichaulax macleayi (Mt Garnet, Qld) listed at US$73.93 opening bid, no bids yet.",
+   "source": "eBay",
+   "date": "2026-10-26"
   }
  }
 }
