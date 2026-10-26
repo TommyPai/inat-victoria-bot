@@ -23,3 +23,4 @@
 - `docs/species.json`:追蹤清單,由 bot 每次執行時從私有設定產生(`publish_species.py`),只含學名、中文名與類群。
 - `docs/prices.json`:市場參考價格,每月更新一次;沒有查到價格的物種顯示「無」。
 - 啟用方式:repo Settings → Pages → Build and deployment → Deploy from a branch → `main` / `/docs`。
+- `docs/stag-atlas.json`:「Stag atlas」檢視用的鍬形蟲資料,包含 Hangay & de Keyzer (2017) *A Guide to Stag Beetles of Australia* 書中的維多利亞產地(座標依地名手動估計)與物種說明。iNat 歷年研究級紀錄在打開該檢視時即時抓取。網址加上 `#atlas` 可直接打開。

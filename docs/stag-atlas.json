@@ -1,0 +1,601 @@
+{
+ "source": "Hangay, G. & de Keyzer, R. (2017) A Guide to Stag Beetles of Australia. CSIRO Publishing.",
+ "about": "Localities are from each species' Distribution section in the book. Coordinates were placed by hand from the place names and are approximate (mountains and reserves often only to within a few kilometres).",
+ "localities": {
+  "Goonmirk Rocks": [
+   -37.43,
+   148.93
+  ],
+  "Mt Drummer": [
+   -37.62,
+   148.85
+  ],
+  "Mt Donna Buang": [
+   -37.7,
+   145.68
+  ],
+  "Gembrook": [
+   -37.96,
+   145.55
+  ],
+  "Mt Macedon": [
+   -37.4,
+   144.58
+  ],
+  "Pakenham": [
+   -38.07,
+   145.49
+  ],
+  "Nar Nar Goon": [
+   -38.1,
+   145.58
+  ],
+  "Big Desert": [
+   -35.65,
+   141.45
+  ],
+  "Wyperfeld NP": [
+   -35.55,
+   141.95
+  ],
+  "Little Desert NP": [
+   -36.45,
+   141.55
+  ],
+  "Lake Hattah": [
+   -34.8,
+   142.3
+  ],
+  "Ballarat": [
+   -37.56,
+   143.85
+  ],
+  "Mount Hope": [
+   -35.87,
+   144.2
+  ],
+  "Sea Lake": [
+   -35.5,
+   142.85
+  ],
+  "Piangil": [
+   -35.12,
+   143.33
+  ],
+  "Mt Baw Baw": [
+   -37.84,
+   146.27
+  ],
+  "Mt St Leonard": [
+   -37.56,
+   145.7
+  ],
+  "Noojee SF": [
+   -37.88,
+   146.0
+  ],
+  "Mt Beenak": [
+   -37.87,
+   145.65
+  ],
+  "Cambarville": [
+   -37.53,
+   145.85
+  ],
+  "Lake Mountain": [
+   -37.51,
+   145.88
+  ],
+  "Mt Dom Dom": [
+   -37.66,
+   145.67
+  ],
+  "Toolangi": [
+   -37.53,
+   145.49
+  ],
+  "Marysville": [
+   -37.51,
+   145.75
+  ],
+  "Otway Range": [
+   -38.65,
+   143.62
+  ],
+  "Kinglake": [
+   -37.53,
+   145.34
+  ],
+  "Tarra Valley": [
+   -38.45,
+   146.55
+  ],
+  "Gunyah": [
+   -38.54,
+   146.34
+  ],
+  "Sherbrooke Forest": [
+   -37.88,
+   145.35
+  ],
+  "Fernshaw": [
+   -37.58,
+   145.63
+  ],
+  "Ferntree Gully": [
+   -37.88,
+   145.3
+  ],
+  "Narbethong": [
+   -37.52,
+   145.63
+  ],
+  "Balook": [
+   -38.43,
+   146.54
+  ],
+  "Wilsons Promontory NP": [
+   -39.03,
+   146.32
+  ],
+  "Mount Wills": [
+   -36.75,
+   147.37
+  ],
+  "Buckety Plain": [
+   -36.83,
+   147.28
+  ],
+  "Bogong High Plains": [
+   -36.87,
+   147.27
+  ],
+  "Castella": [
+   -37.51,
+   145.5
+  ],
+  "Grampians": [
+   -37.15,
+   142.5
+  ],
+  "Black Spur": [
+   -37.58,
+   145.62
+  ],
+  "Buckland River": [
+   -36.78,
+   146.92
+  ],
+  "Buxton": [
+   -37.43,
+   145.72
+  ],
+  "Cobungra": [
+   -37.12,
+   147.35
+  ],
+  "Emerald": [
+   -37.93,
+   145.44
+  ],
+  "Healesville": [
+   -37.65,
+   145.52
+  ],
+  "Kawarren": [
+   -38.42,
+   143.55
+  ],
+  "Mt Beauty": [
+   -36.74,
+   147.17
+  ],
+  "Mt Difficult": [
+   -37.12,
+   142.42
+  ],
+  "Mt Evelyn": [
+   -37.79,
+   145.38
+  ],
+  "Mt Howitt": [
+   -37.18,
+   146.67
+  ],
+  "Nariel": [
+   -36.18,
+   147.62
+  ],
+  "Strathbogie": [
+   -36.83,
+   145.77
+  ],
+  "Tallarook": [
+   -37.1,
+   145.1
+  ],
+  "Tonimbuk": [
+   -38.03,
+   145.78
+  ],
+  "Thomson River Gorge": [
+   -37.88,
+   146.36
+  ],
+  "Upper Tanjil River": [
+   -37.92,
+   146.2
+  ],
+  "Warburton": [
+   -37.75,
+   145.7
+  ],
+  "30 km S of Whitfield": [
+   -37.06,
+   146.4
+  ],
+  "Glen Wills": [
+   -36.55,
+   147.43
+  ],
+  "Belgrave": [
+   -37.91,
+   145.35
+  ],
+  "Thorpdale": [
+   -38.29,
+   146.17
+  ],
+  "Upper Tarago River": [
+   -38.0,
+   145.95
+  ],
+  "Mt Ben Cairn": [
+   -37.72,
+   145.88
+  ]
+ },
+ "species": [
+  {
+   "key": "bitumulatus",
+   "genus": "Ceratognathus",
+   "epithet": "bitumulatus",
+   "author": "Carter, 1925",
+   "color": "#2563b8",
+   "page": 29,
+   "scope": "local",
+   "localities": [
+    "Goonmirk Rocks",
+    "Mt Donna Buang",
+    "Mt Drummer"
+   ],
+   "note": "Also in the mountains of NSW and the ACT."
+  },
+  {
+   "key": "frenchi",
+   "genus": "Ceratognathus",
+   "epithet": "frenchi",
+   "author": "Blackburn, 1897",
+   "color": "#4a9be0",
+   "page": 31,
+   "scope": "local",
+   "localities": [
+    "Gembrook"
+   ],
+   "note": "Recorded from the south-eastern ranges of Victoria; Gembrook (a museum specimen) is the only specific locality."
+  },
+  {
+   "key": "gilesi",
+   "genus": "Ceratognathus",
+   "epithet": "gilesi",
+   "author": "Blackburn, 1895",
+   "color": "#18919f",
+   "page": 35,
+   "scope": "local",
+   "localities": [
+    "Mt Macedon",
+    "Pakenham",
+    "Nar Nar Goon"
+   ],
+   "note": "Also in the ranges of the NSW south coast."
+  },
+  {
+   "key": "niger",
+   "genus": "Ceratognathus",
+   "epithet": "niger",
+   "author": "Westwood, 1838",
+   "color": "#7d84e8",
+   "page": 40,
+   "scope": "broad",
+   "note": "Listed for the NSW south coast, ACT, Victoria and Tasmania, with no specific Victorian localities."
+  },
+  {
+   "key": "ocularis",
+   "genus": "Ceratognathus",
+   "epithet": "ocularis",
+   "author": "Carter, 1925",
+   "color": "#32b6d6",
+   "page": 42,
+   "scope": "local",
+   "alias": "Mitophyllus ocularis",
+   "localities": [
+    "Goonmirk Rocks"
+   ],
+   "note": "Listed on iNaturalist as Mitophyllus ocularis; treated here as the same species."
+  },
+  {
+   "key": "mentiferus",
+   "genus": "Ceratognathus",
+   "epithet": "mentiferus",
+   "author": "Westwood, 1863",
+   "color": "#5d7fe6",
+   "scope": "inatonly",
+   "note": "No Victorian locality in the book; known in Victoria from iNaturalist records."
+  },
+  {
+   "key": "macrognathus",
+   "genus": "Ceratognathus",
+   "epithet": "macrognathus",
+   "author": "Boileau, 1905",
+   "color": "#2b4aa3",
+   "scope": "inatonly",
+   "note": "No Victorian locality in the book; known in Victoria from iNaturalist records."
+  },
+  {
+   "key": "aurata",
+   "genus": "Lamprima",
+   "epithet": "aurata",
+   "author": "Latreille, 1817",
+   "common": "Golden Stag Beetle",
+   "color": "#e0a100",
+   "page": 53,
+   "scope": "wide",
+   "note": "Listed for NSW, the ACT, Victoria and eastern Tasmania; iNaturalist has records from all over Victoria."
+  },
+  {
+   "key": "varians",
+   "genus": "Lamprima",
+   "epithet": "varians",
+   "author": "Burmeister, 1847",
+   "color": "#d9622b",
+   "page": 58,
+   "scope": "local",
+   "localities": [
+    "Big Desert",
+    "Wyperfeld NP",
+    "Little Desert NP"
+   ],
+   "note": "Prefers drier country: western Victoria and South Australia."
+  },
+  {
+   "key": "cornutus",
+   "genus": "Syndesus",
+   "epithet": "cornutus",
+   "author": "(Fabricius, 1801)",
+   "color": "#7f93a6",
+   "page": 67,
+   "scope": "broad",
+   "note": "Listed along the east coast from Queensland to Tasmania, with no specific Victorian localities."
+  },
+  {
+   "key": "lilliputanus",
+   "genus": "Figulus",
+   "epithet": "lilliputanus",
+   "author": "Westwood, 1855",
+   "color": "#8e44ad",
+   "page": 92,
+   "scope": "local",
+   "localities": [
+    "Lake Hattah",
+    "Ballarat",
+    "Mount Hope",
+    "Sea Lake",
+    "Piangil"
+   ],
+   "note": "Five Victorian localities, mostly in the north-west."
+  },
+  {
+   "key": "nitens",
+   "genus": "Figulus",
+   "epithet": "nitens",
+   "author": "Waterhouse, 1874",
+   "color": "#b872da",
+   "page": 93,
+   "scope": "broad",
+   "note": "The book says it has also been found in Victoria, without a specific locality."
+  },
+  {
+   "key": "regularis",
+   "genus": "Figulus",
+   "epithet": "regularis",
+   "author": "Westwood, 1834",
+   "color": "#6a3fb8",
+   "page": 94,
+   "scope": "area",
+   "areas": [
+    [
+     "South Gippsland (Goudie 1904)",
+     -38.5,
+     146.2,
+     50.0,
+     28.0
+    ],
+    [
+     "Western Victoria (extent unclear)",
+     -36.5,
+     141.8,
+     120.0,
+     105.0
+    ]
+   ],
+   "note": "The book gives only 'South Gippsland' and 'western Victoria'; dashed ellipses mark the rough areas."
+  },
+  {
+   "key": "howittanus",
+   "genus": "Lissapterus",
+   "epithet": "howittanus",
+   "author": "(Westwood, 1863)",
+   "color": "#2e9d57",
+   "page": 112,
+   "scope": "local",
+   "localities": [
+    "Mt Baw Baw",
+    "Mt Donna Buang",
+    "Mt St Leonard",
+    "Noojee SF",
+    "Mt Beenak",
+    "Cambarville",
+    "Lake Mountain",
+    "Mt Dom Dom",
+    "Toolangi"
+   ],
+   "note": "Eastern ranges, from the subalpine Baw Baw Plateau down to about 600 m at Noojee."
+  },
+  {
+   "key": "darlingtoni",
+   "genus": "Lissotes",
+   "epithet": "darlingtoni",
+   "author": "Benesh, 1943",
+   "color": "#c0392b",
+   "page": 140,
+   "scope": "local",
+   "localities": [
+    "Marysville",
+    "Mt Baw Baw",
+    "Mt Donna Buang"
+   ],
+   "note": "Mainly above about 900 m."
+  },
+  {
+   "key": "furcicornis",
+   "genus": "Lissotes",
+   "epithet": "furcicornis",
+   "author": "Westwood, 1871",
+   "color": "#e5557a",
+   "page": 146,
+   "scope": "local",
+   "localities": [
+    "Mt Baw Baw",
+    "Otway Range",
+    "Kinglake",
+    "Tarra Valley",
+    "Gunyah",
+    "Sherbrooke Forest",
+    "Mt St Leonard",
+    "Noojee SF",
+    "Mt Beenak",
+    "Fernshaw",
+    "Ferntree Gully",
+    "Gembrook",
+    "Narbethong",
+    "Toolangi",
+    "Balook",
+    "Mt Dom Dom"
+   ],
+   "note": "Wet sclerophyll forest over a wide range of altitudes; the book calls it relatively common."
+  },
+  {
+   "key": "kershawi",
+   "genus": "Lissotes",
+   "epithet": "kershawi",
+   "author": "Lea, 1918",
+   "color": "#a62f66",
+   "page": 150,
+   "scope": "local",
+   "localities": [
+    "Wilsons Promontory NP"
+   ],
+   "note": "Only in Wilsons Promontory National Park."
+  },
+  {
+   "key": "krakei",
+   "genus": "Lissotes",
+   "epithet": "krakei",
+   "author": "Bartolozzi, de Keyzer & Zilioli, 2014",
+   "color": "#f08a5d",
+   "page": 151,
+   "scope": "local",
+   "localities": [
+    "Mount Wills",
+    "Buckety Plain",
+    "Bogong High Plains"
+   ],
+   "note": "Snow gum woodland above 1,000 m (Alpine National Park)."
+  },
+  {
+   "key": "nebulosus",
+   "genus": "Ryssonotus",
+   "epithet": "nebulosus",
+   "author": "(Kirby, 1819)",
+   "common": "Brown Stag Beetle",
+   "color": "#8b5a2b",
+   "page": 182,
+   "scope": "broad",
+   "note": "Listed along the coast of Queensland, NSW and Victoria, with no specific Victorian localities."
+  },
+  {
+   "key": "jugularis",
+   "genus": "Safrina",
+   "epithet": "jugularis",
+   "author": "(Westwood, 1863)",
+   "color": "#7aa800",
+   "page": 192,
+   "scope": "local",
+   "localities": [
+    "Mt Drummer",
+    "Mt St Leonard",
+    "Castella",
+    "Grampians",
+    "Black Spur",
+    "Buckland River",
+    "Buxton",
+    "Cobungra",
+    "Emerald",
+    "Ferntree Gully",
+    "Healesville",
+    "Kawarren",
+    "Otway Range",
+    "Mt Baw Baw",
+    "Mt Beauty",
+    "Mt Difficult",
+    "Mt Evelyn",
+    "Mt Howitt",
+    "Mt Macedon",
+    "Nariel",
+    "Strathbogie",
+    "Tallarook",
+    "Tonimbuk",
+    "Thomson River Gorge",
+    "Upper Tanjil River",
+    "Warburton",
+    "30 km S of Whitfield"
+   ],
+   "unplotted": [
+    "Toorango River Valley"
+   ],
+   "note": "Commoner in wet forest above about 1,000 m; widespread, with the most Victorian localities."
+  },
+  {
+   "key": "parallela",
+   "genus": "Safrina",
+   "epithet": "parallela",
+   "author": "(Deyrolle, 1881)",
+   "color": "#0d9a7e",
+   "page": 199,
+   "scope": "local",
+   "localities": [
+    "Balook",
+    "Mt Macedon",
+    "Mt Donna Buang",
+    "Mt St Leonard",
+    "Glen Wills",
+    "Belgrave",
+    "Thorpdale",
+    "Upper Tarago River",
+    "Warburton",
+    "Mt Ben Cairn"
+   ],
+   "note": "Hard to find; also on the NSW south coast."
+  }
+ ]
+}

@@ -95,7 +95,15 @@
   .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
   .leaflet-control-attribution { background: color-mix(in srgb, var(--panel) 85%, transparent) !important; color: var(--muted); }
   .leaflet-control-attribution a { color: var(--muted); }
-  .leaflet-top { top: 120px; }
+  .leaflet-top { top: var(--top, 120px); }
+  /* Stag atlas 檢視: 類群按鈕換成圖層開關 */
+  body.atlas .chip[data-group], body.atlas #toggleAll, body.atlas .seg.days { display: none; }
+  body:not(.atlas) .chip.lay { display: none; }
+  .bk { width: 13px; height: 13px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); display: grid; place-items: center;
+    font: 700 10px/1 system-ui, sans-serif; color: var(--bg); }
+  .bk.multi { width: 18px; height: 18px; background: var(--text); }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex: none; }
+  .pop .sw { vertical-align: 0; }
   .leaflet-tile-pane { filter: saturate(.75) contrast(.95); }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6); }
@@ -107,7 +115,7 @@
     border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 14px; display: none; max-width: calc(100vw - 32px); }
   .msg.on { display: block; }
   .msg button { margin-left: 8px; border: 1px solid var(--line); background: var(--chip); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
-  @media (max-width: 520px) { .title h1 { font-size: 16px; } .leaflet-top { top: 128px; } }
+  @media (max-width: 520px) { .title h1 { font-size: 16px; } }
 </style>
 </head>
 <body>
@@ -115,9 +123,11 @@
 
 <div class="top">
   <div class="bar">
-    <div class="title"><h1>🪲 Victorian Beetle Map</h1><span class="status" id="status">Loading…</span></div>
+    <div class="title"><h1>🪲 Victorian Beetle Map</h1>
+      <span class="seg view" role="group" aria-label="View"><button data-view="sightings" aria-pressed="true">Sightings</button><button data-view="atlas" aria-pressed="false">🦌 Stag atlas</button></span>
+      <span class="status" id="status">Loading…</span></div>
     <div class="chips" id="chips">
-      <span class="seg" role="group" aria-label="Time range">
+      <span class="seg days" role="group" aria-label="Time range">
         <button data-days="7" aria-pressed="false">7 days</button><button data-days="30" aria-pressed="true">30 days</button>
       </span>
     </div>
@@ -132,7 +142,7 @@
 
 <section class="drawer" id="drawer" aria-label="Species catalog and reference prices">
   <header>
-    <h2><span>Species · Reference prices</span><button id="closeCatalog" aria-label="Close">×</button></h2>
+    <h2><span id="drawerTitle">Species · Reference prices</span><button id="closeCatalog" aria-label="Close">×</button></h2>
     <input id="search" type="search" placeholder="Search scientific or common name" autocomplete="off">
   </header>
   <div class="list" id="list"></div>
@@ -159,7 +169,7 @@ const GROUP_EN = { "金龜": "Scarabs", "吉丁蟲": "Jewel beetles", "鍬形蟲
 const gname = (g) => GROUP_EN[g] || g;
 
 const S = { species: [], groups: [], byId: new Map(), prices: {}, priceMeta: {}, obs: [], days: 30,
-            off: new Set(), focus: null, colors: {}, en: new Map() };
+            off: new Set(), focus: null, colors: {}, en: new Map(), view: "sightings" };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -182,6 +192,10 @@ map.on("popupopen", (e) => setTimeout(() => {
 // 上方標題列的高度:縮放與彈出視窗都要避開它
 const topSpace = () => document.querySelector(".bar").getBoundingClientRect().bottom + 8;
 const fitOpts = (maxZoom) => ({ maxZoom, paddingTopLeft: [24, topSpace()], paddingBottomRight: [24, 70] });
+const popOpts = () => ({ maxWidth: 270, autoPanPaddingTopLeft: L.point(16, topSpace() + 10), autoPanPaddingBottomRight: L.point(16, 72) });
+// 縮放按鈕放在標題列下方(標題列在手機上可能折成兩行)
+const placeControls = () => document.documentElement.style.setProperty("--top", `${Math.round(topSpace())}px`);
+addEventListener("resize", placeControls);
 // 網頁剛打開時,地圖容器的大小有時還沒確定(例如分頁在背景、手機轉向);那時縮放會算錯而放大到上限。
 // 先記下要縮放的範圍,等容器有正常大小再做,之後大小改變也會重新校正。
 let pendingFit = null;
@@ -275,6 +289,13 @@ function buildChips() {
   all.className = "chip all"; all.id = "toggleAll";
   all.onclick = () => { if (S.off.size === 0) S.groups.forEach((g) => S.off.add(g.name)); else S.off.clear(); render(false); };
   box.appendChild(all);
+  for (const [k, label] of [["book", "📖 Book localities"], ["inat", "📍 iNat records (all years)"], ["aurata", "✨ Golden stag"]]) {
+    const b = document.createElement("button");
+    b.className = "chip lay"; b.dataset.layer = k;
+    b.innerHTML = `${label} <span class="n"></span>`;
+    b.onclick = () => { A.show[k] = !A.show[k]; renderAtlas(false); if (k === "inat" && A.show.inat) loadRecords(); };
+    box.appendChild(b);
+  }
   for (const g of S.groups) {
     const b = document.createElement("button");
     b.className = "chip"; b.dataset.group = g.name; b.setAttribute("aria-pressed", "true");
@@ -311,7 +332,7 @@ function render(fit) {
   const layers = vis.map((x) => {
     const [lat, lng] = x.o.location.split(",").map(Number);
     return L.circleMarker([lat, lng], { radius: 7, weight: 1.5, color: "#ffffff", fillColor: S.colors[x.t.group], fillOpacity: x.o.obscured ? 0.55 : 0.95,
-      dashArray: x.o.obscured ? "3 3" : null }).bindPopup(() => popup(x), { maxWidth: 270, autoPanPaddingTopLeft: L.point(16, topSpace() + 10), autoPanPaddingBottomRight: L.point(16, 72) });
+      dashArray: x.o.obscured ? "3 3" : null }).bindPopup(() => popup(x), popOpts());
   });
   cluster.addLayers(layers);
   if (fit && layers.length) fitTo(L.latLngBounds(vis.map((x) => x.o.location.split(",").map(Number))), 11);
@@ -326,21 +347,25 @@ function render(fit) {
     c.classList.toggle("off", S.off.has(g)); c.setAttribute("aria-pressed", String(!S.off.has(g)));
     c.querySelector(".n").textContent = inRange.filter((x) => x.t.group === g).length;
   });
-  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.days === S.days)));
+  document.querySelectorAll(".seg.days button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.days === S.days)));
   const focusSp = S.focus && S.byId.get(S.focus);
   $("focus").classList.toggle("on", !!focusSp);
   if (focusSp) $("focusText").innerHTML = `Showing only <i>${esc(focusSp.name)}</i>${S.en.get(focusSp.taxon_id) ? ` (${esc(S.en.get(focusSp.taxon_id))})` : ""}`;
+  if (S.view !== "sightings") return;
   setStatus(`Last ${S.days} days · ${vis.length} sightings · updated ${new Date().toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}`);
+  placeControls();
   renderList();
 }
 
-function priceHtml(id) {
+function priceHtml(id, label = "Reference price") {
   const p = S.prices[String(id)];
-  if (!p) return `Reference price: <span class="none">None</span>`;
-  return `Reference price: <b>${esc(p.price)}</b> · ${esc(p.source)}, ${esc(p.date)}<br>${esc(p.detail || "")}`;
+  if (!p) return `${label}: <span class="none">None</span>`;
+  return `${label}: <b>${esc(p.price)}</b> · ${esc(p.source)}, ${esc(p.date)}<br>${esc(p.detail || "")}`;
 }
 
 function renderList() {
+  if (S.view === "atlas") return renderAtlasList();
+  $("drawerTitle").textContent = "Species · Reference prices";
   const q = $("search").value.trim().toLowerCase();
   const counts = new Map();
   S.obs.filter(inWindow).forEach((x) => counts.set(x.t.taxon_id, (counts.get(x.t.taxon_id) || 0) + 1));
@@ -377,9 +402,202 @@ function toggleDrawer(open) {
   if (open) renderList();
 }
 
+// ---------- Stag atlas: 書中產地(Hangay & de Keyzer 2017)+ iNat 歷年研究級鍬形蟲紀錄 ----------
+const LUCANIDAE = 49083;
+const A = { data: null, recs: null, loading: false, show: { book: true, inat: true, aurata: true }, focus: null, byName: new Map(), fitted: false };
+const atlasLayer = L.layerGroup();
+const bookLayer = L.layerGroup().addTo(atlasLayer);
+const recCluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 42, spiderfyOnMaxZoom: true,
+  iconCreateFunction: cluster.options.iconCreateFunction });
+atlasLayer.addLayer(recCluster);
+const binom = (o) => ((o.taxon && o.taxon.name) || "").split(" ").slice(0, 2).join(" ");
+const spOf = (o) => A.byName.get(binom(o)) || null;
+const fullName = (s) => `${s.genus} ${s.epithet}`;
+
+async function loadAtlas() {
+  if (A.data) return;
+  A.data = await loadJSON("stag-atlas.json");
+  for (const s of A.data.species) { A.byName.set(fullName(s), s); if (s.alias) A.byName.set(s.alias, s); }
+}
+
+// 歷年研究級紀錄(約 2,700 筆):只在第一次打開這個圖層時抓
+async function loadRecords() {
+  if (A.recs || A.loading) return;
+  A.loading = true;
+  try {
+    let below = null, all = [];
+    for (let page = 0; page < 25; page++) {
+      const p = new URLSearchParams({ taxon_id: LUCANIDAE, place_id: 7830, quality_grade: "research", captive: "false", per_page: 200,
+        order_by: "id", order: "desc", locale: "en", fields: FIELDS });
+      if (below) p.set("id_below", below);
+      let r;
+      for (let tryN = 0; tryN < 3; tryN++) { r = await fetch(`${API}?${p}`); if (r.ok) break; await sleep(2000 * (tryN + 1)); }
+      if (!r.ok) throw new Error(`iNaturalist ${r.status}`);
+      const res = (await r.json()).results || [];
+      all = all.concat(res.filter((o) => o.location));
+      if (S.view === "atlas") setStatus(`Loading stag beetle records… ${all.length}`);
+      if (res.length < 200) break;
+      below = res[res.length - 1].id;
+      await sleep(1000);
+    }
+    A.recs = all;
+  } catch (e) {
+    showMsg(`Couldn’t load the stag beetle records (${esc(e.message)})`);
+  } finally {
+    A.loading = false;
+  }
+  if (S.view === "atlas") renderAtlas(!A.fitted);
+}
+
+function bookPopup(name, list) {
+  return `<div class="pop"><div class="sp">📖 ${esc(name)}</div>
+    <div class="meta">Locality from the book · position approximate</div>
+    ${list.map((s) => `<div class="meta" style="margin-top:4px"><span class="sw" style="background:${s.color}"></span><i>${esc(fullName(s))}</i>${s.page ? ` · p. ${s.page}` : ""}</div>`).join("")}</div>`;
+}
+
+function recPopup(o, s) {
+  const t = o.taxon || {};
+  const photo = o.photos && o.photos[0] && o.photos[0].url ? o.photos[0].url.replace("square", "medium") : "";
+  const name = t.preferred_common_name ? `${esc(t.preferred_common_name)} <span class="sci">${esc(t.name)}</span>` : `<span class="sci">${esc(t.name)}</span>`;
+  return `<div class="pop">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : ""}
+    <div class="sp">${name}</div>
+    <div class="meta">Stag beetle · research grade${s && s.page ? ` · book p. ${s.page}` : s ? "" : " · not in the book list"}</div>
+    <div class="meta">📅 ${esc(o.observed_on || "?")}${o.faves_count ? ` · ★ ${o.faves_count}` : ""}</div>
+    <div class="meta">📍 ${esc((o.place_guess || "Unknown location").split(",").slice(0, 2).join(","))}${o.obscured ? " (location obscured)" : ""}</div>
+    <div class="meta" style="margin-top:6px"><a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">View on iNaturalist →</a></div></div>`;
+}
+
+// 書中只給大致範圍的物種(Figulus regularis):用虛線橢圓表示
+function ellipse(la, lo, rxKm, ryKm) {
+  const pts = [];
+  for (let i = 0; i < 48; i++) {
+    const t = (i / 48) * 2 * Math.PI;
+    pts.push([la + (ryKm / 111.2) * Math.sin(t), lo + (rxKm / (111.2 * Math.cos(la * Math.PI / 180))) * Math.cos(t)]);
+  }
+  return pts;
+}
+
+function atlasRecords() {
+  if (!A.recs) return [];
+  return A.recs.filter((o) => {
+    const s = spOf(o);
+    if (A.focus) return s && s.key === A.focus;
+    return A.show.aurata || !(s && s.key === "aurata");
+  });
+}
+
+function renderAtlas(fit) {
+  if (!A.data) return;
+  bookLayer.clearLayers(); recCluster.clearLayers();
+  const vis = A.focus ? A.data.species.filter((s) => s.key === A.focus) : A.data.species;
+  const pts = [];
+  const byLoc = new Map();
+  vis.forEach((s) => (s.localities || []).forEach((l) => { if (!byLoc.has(l)) byLoc.set(l, []); byLoc.get(l).push(s); }));
+  if (A.show.book) {
+    for (const [name, list] of byLoc) {
+      const ll = A.data.localities[name], multi = list.length > 1;
+      pts.push(ll);
+      const icon = L.divIcon({ className: "", iconSize: multi ? [18, 18] : [13, 13],
+        html: `<div class="bk${multi ? " multi" : ""}" style="${multi ? "" : `background:${list[0].color}`}">${multi ? list.length : ""}</div>` });
+      L.marker(ll, { icon, title: name, zIndexOffset: 500 }).bindPopup(bookPopup(name, list), popOpts()).addTo(bookLayer);
+    }
+    vis.forEach((s) => (s.areas || []).forEach(([name, la, lo, rx, ry]) => {
+      const ring = ellipse(la, lo, rx, ry);
+      ring.forEach((p) => pts.push(p));
+      L.polygon(ring, { color: s.color, weight: 1.5, dashArray: "6 4", fillColor: s.color, fillOpacity: 0.08 })
+        .bindPopup(`<div class="pop"><div class="sp">📖 ${esc(name)}</div><div class="meta"><span class="sw" style="background:${s.color}"></span><i>${esc(fullName(s))}</i> · rough area from the book</div></div>`, popOpts())
+        .addTo(bookLayer);
+    }));
+  }
+  const recs = A.show.inat ? atlasRecords() : [];
+  recCluster.addLayers(recs.map((o) => {
+    const s = spOf(o), ll = o.location.split(",").map(Number);
+    pts.push(ll);
+    return L.circleMarker(ll, { radius: 6, weight: 1.5, color: "#ffffff", fillColor: s ? s.color : "#8a8a8a", fillOpacity: o.obscured ? 0.5 : 0.95,
+      dashArray: o.obscured ? "3 3" : null }).bindPopup(() => recPopup(o, s), popOpts());
+  }));
+  if (fit && pts.length) { fitTo(L.latLngBounds(pts), 11); if (A.recs) A.fitted = true; }
+
+  // 圖層開關與狀態列
+  const nAur = A.recs ? A.recs.filter((o) => (spOf(o) || {}).key === "aurata").length : 0;
+  const counts = { book: byLoc.size, inat: A.recs ? A.recs.length : "", aurata: A.recs ? nAur : "" };
+  document.querySelectorAll(".chip.lay").forEach((c) => {
+    const k = c.dataset.layer;
+    c.classList.toggle("off", !A.show[k]); c.setAttribute("aria-pressed", String(A.show[k]));
+    c.querySelector(".n").textContent = counts[k];
+  });
+  const sp = A.focus && A.data.species.find((x) => x.key === A.focus);
+  $("focus").classList.toggle("on", !!sp);
+  if (sp) $("focusText").innerHTML = `Showing only <i>${esc(fullName(sp))}</i>${sp.common ? ` (${esc(sp.common)})` : ""}`;
+  setStatus(A.loading && !A.recs ? "Loading stag beetle records…"
+    : `Stag beetles · ${A.show.book ? byLoc.size : 0} book localities · ${recs.length} iNat records (research grade, all years)`);
+  placeControls();
+  renderList();
+}
+
+// 目錄: 書中物種,附頁碼、說明與對應屬的參考價格
+function atlasPrice(s) {
+  // 追蹤清單多半是屬:價格是整個屬的,可能來自同屬別的種,所以標明是屬層級
+  const sp = S.species.find((x) => x.name === fullName(s));
+  if (sp) return priceHtml(sp.taxon_id);
+  const g = S.species.find((x) => x.name === s.genus);
+  return g ? priceHtml(g.taxon_id, `Reference price (genus <i>${esc(s.genus)}</i>)`) : `Reference price: <span class="none">None</span>`;
+}
+
+function renderAtlasList() {
+  $("drawerTitle").textContent = "Stag beetles · Book & prices";
+  const q = $("search").value.trim().toLowerCase();
+  const counts = new Map();
+  (A.recs || []).forEach((o) => { const s = spOf(o); if (s) counts.set(s.key, (counts.get(s.key) || 0) + 1); });
+  const where = (s) => s.scope === "local" ? `${s.localities.length} ${s.localities.length > 1 ? "localities" : "locality"} in the book`
+    : s.scope === "area" ? "rough areas only" : s.scope === "inatonly" ? "no Victorian locality in the book"
+    : s.scope === "wide" ? "widespread" : "no specific Victorian localities";
+  let html = "", genus = "";
+  for (const s of (A.data ? A.data.species : [])) {
+    if (q && !fullName(s).toLowerCase().includes(q) && !(s.common || "").toLowerCase().includes(q)) continue;
+    if (s.genus !== genus) { genus = s.genus; html += `<div class="grp"><i>${esc(genus)}</i></div>`; }
+    const n = counts.get(s.key) || 0;
+    html += `<button class="row" data-key="${esc(s.key)}"><span style="display:flex;align-items:baseline"><span class="sw" style="background:${s.color}"></span><span><span class="nm">${esc(fullName(s))}</span>${s.common ? `<span class="zh">${esc(s.common)}</span>` : ""}</span></span>
+      <span class="cnt">${A.recs ? (n ? `${n} record${n > 1 ? "s" : ""}` : "—") : ""}</span>
+      <span class="pr">${s.page ? `Book p. ${s.page}` : "Not in the book for Victoria"} · ${where(s)}<br>${esc(s.note)}<br>${atlasPrice(s)}</span></button>`;
+  }
+  $("list").innerHTML = html || '<div class="grp">No matching species</div>';
+  $("list").querySelectorAll(".row").forEach((r) => (r.onclick = () => atlasFocus(r.dataset.key)));
+  $("priceNote").textContent = A.data ? `Book: ${A.data.source} ${A.data.about} Prices checked ${S.priceMeta.updated || "—"}; ${S.priceMeta.note || ""}` : "";
+}
+
+function atlasFocus(key) {
+  A.focus = key;
+  if (!A.show.book && !A.show.inat) A.show.book = A.show.inat = true;
+  renderAtlas(false);
+  const s = A.data.species.find((x) => x.key === key);
+  const pts = (s.localities || []).map((l) => A.data.localities[l]).concat(atlasRecords().map((o) => o.location.split(",").map(Number)));
+  (s.areas || []).forEach(([, la, lo, rx, ry]) => ellipse(la, lo, rx, ry).forEach((p) => pts.push(p)));
+  if (pts.length) fitTo(L.latLngBounds(pts), 12);
+  else showMsg("No mapped localities or records for this species");
+  if (innerWidth < 700) toggleDrawer(false);
+}
+
+async function setView(v) {
+  S.view = v;
+  document.body.classList.toggle("atlas", v === "atlas");
+  document.querySelectorAll(".seg.view button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
+  history.replaceState(null, "", v === "atlas" ? "#atlas" : location.pathname + location.search);
+  if (v === "atlas") {
+    map.removeLayer(cluster); map.addLayer(atlasLayer);
+    try { await loadAtlas(); } catch (e) { return showMsg(`Couldn’t load the stag atlas (${esc(e.message)})`); }
+    renderAtlas(true);
+    if (A.show.inat) loadRecords();
+  } else {
+    map.removeLayer(atlasLayer); map.addLayer(cluster);
+    render(false);
+  }
+}
+
 // ---------- 事件 ----------
-document.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => { S.days = +b.dataset.days; render(false); }));
-$("clearFocus").onclick = () => { S.focus = null; render(true); };
+document.querySelectorAll(".seg.days button").forEach((b) => (b.onclick = () => { S.days = +b.dataset.days; render(false); }));
+document.querySelectorAll(".seg.view button").forEach((b) => (b.onclick = () => setView(b.dataset.view)));
+$("clearFocus").onclick = () => { if (S.view === "atlas") { A.focus = null; renderAtlas(true); } else { S.focus = null; render(true); } };
 $("openCatalog").onclick = () => toggleDrawer(!$("drawer").classList.contains("open"));
 $("closeCatalog").onclick = () => toggleDrawer(false);
 $("search").oninput = renderList;
@@ -393,7 +611,7 @@ $("locate").onclick = () => {
   }, () => showMsg("Couldn’t get your location (location permission may be off)"), { enableHighAccuracy: false, timeout: 10000 });
 };
 
-init();
+init().then(() => { if (location.hash === "#atlas") setView("atlas"); });
 </script>
 </body>
 </html>
