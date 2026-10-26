@@ -101,8 +101,14 @@
   body:not(.atlas) .chip.lay { display: none; }
   .bk { width: 13px; height: 13px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); display: grid; place-items: center;
     font: 700 10px/1 system-ui, sans-serif; color: var(--bg); }
-  .bk.multi { width: 18px; height: 18px; background: var(--text); }
+  .bkm { width: 28px; height: 28px; display: grid; grid-template-columns: 1fr 1fr; place-items: center; padding: 1px;
+    background: color-mix(in srgb, var(--panel) 80%, transparent); border: 1px solid var(--muted); border-radius: 6px; }
+  .bkm b { font: 700 9px/1 system-ui, sans-serif; color: var(--text); }
   .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex: none; }
+  .clg { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .clg-s { display: flex; gap: 2px; padding: 1px 3px; background: var(--panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+  .shp { display: block; overflow: visible; filter: drop-shadow(0 0 1px rgba(0,0,0,.55)); }
+  .shp-i { display: inline-block; vertical-align: -2px; margin-right: 6px; flex: none; overflow: visible; }
   .pop .sw { vertical-align: 0; }
   .leaflet-tile-pane { filter: saturate(.75) contrast(.95); }
   @media (prefers-color-scheme: dark) {
@@ -289,7 +295,7 @@ function buildChips() {
   all.className = "chip all"; all.id = "toggleAll";
   all.onclick = () => { if (S.off.size === 0) S.groups.forEach((g) => S.off.add(g.name)); else S.off.clear(); render(false); };
   box.appendChild(all);
-  for (const [k, label] of [["book", "📖 Book localities"], ["inat", "📍 iNat records (all years)"], ["aurata", "✨ Golden stag"]]) {
+  for (const [k, label] of [["book", `${shapeSvg("circle", "#555", false, 13, "shp-i")}Book localities (outline)`], ["inat", `${shapeSvg("circle", "#555", true, 13, "shp-i")}iNat records, all years (filled)`], ["aurata", "✨ Golden stag"]]) {
     const b = document.createElement("button");
     b.className = "chip lay"; b.dataset.layer = k;
     b.innerHTML = `${label} <span class="n"></span>`;
@@ -407,12 +413,46 @@ const LUCANIDAE = 49083;
 const A = { data: null, recs: null, loading: false, show: { book: true, inat: true, aurata: true }, focus: null, byName: new Map(), fitted: false };
 const atlasLayer = L.layerGroup();
 const bookLayer = L.layerGroup().addTo(atlasLayer);
-const recCluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 42, spiderfyOnMaxZoom: true,
-  iconCreateFunction: cluster.options.iconCreateFunction });
+// 鍬形蟲紀錄的群組: 數字下方顯示群組內有哪些屬(形狀,最多 3 種,依數量排序);放大到第 12 級後不再合併
+const recCluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 42, spiderfyOnMaxZoom: true, disableClusteringAtZoom: 12,
+  iconCreateFunction: (c) => {
+    const n = c.getChildCount(), byGenus = new Map();
+    for (const m of c.getAllChildMarkers()) { const s = m.options.sp; const k = s ? s.genus : "?"; byGenus.set(k, (byGenus.get(k) || 0) + 1); }
+    const top = [...byGenus.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const d = n < 10 ? 30 : n < 100 ? 36 : 44;
+    return L.divIcon({ className: "", iconSize: [Math.max(d, top.length * 13 + 8), d + 12],
+      html: `<div class="clg"><div class="cl" style="width:${d}px;height:${d}px">${n}</div><div class="clg-s">${top.map(([g]) => shapeSvg(GENUS_SHAPE[g] || "circle", "#666", true, 11)).join("")}</div></div>` });
+  } });
 atlasLayer.addLayer(recCluster);
 const binom = (o) => ((o.taxon && o.taxon.name) || "").split(" ").slice(0, 2).join(" ");
 const spOf = (o) => A.byName.get(binom(o)) || null;
 const fullName = (s) => `${s.genus} ${s.epithet}`;
+
+// 每個屬一種形狀(同屬的不同種用顏色區分);空心 = 書中產地,實心 = iNat 紀錄
+const SHAPES = {
+  circle: '<circle cx="10" cy="10" r="7.2"/>',
+  square: '<rect x="3.2" y="3.2" width="13.6" height="13.6"/>',
+  diamond: '<path d="M10 1.6 18.4 10 10 18.4 1.6 10Z"/>',
+  triangle: '<path d="M10 2 18.6 17.4H1.4Z"/>',
+  invtriangle: '<path d="M1.4 2.6H18.6L10 18Z"/>',
+  hexagon: '<path d="M10 1.8 17.2 6V14L10 18.2 2.8 14V6Z"/>',
+  star: '<path d="M10 1.2 12.6 7.1 19 7.6 14.1 11.8 15.6 18.1 10 14.7 4.4 18.1 5.9 11.8 1 7.6 7.4 7.1Z"/>',
+  plus: '<path d="M6.8 1.8H13.2V6.8H18.2V13.2H13.2V18.2H6.8V13.2H1.8V6.8H6.8Z"/>',
+};
+const GENUS_SHAPE = { Lamprima: "circle", Syndesus: "square", Ceratognathus: "diamond", Lissotes: "triangle",
+  Lissapterus: "invtriangle", Safrina: "hexagon", Figulus: "star", Ryssonotus: "plus" };
+const shapeOf = (s) => GENUS_SHAPE[s && s.genus] || "circle";
+function shapeSvg(shape, color, filled, size, cls = "shp") {
+  const paint = filled ? `fill="${color}" stroke="#ffffff" stroke-width="1.6"` : `fill="#ffffff" stroke="${color}" stroke-width="3.4"`;
+  return `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 20 20" aria-hidden="true"><g ${paint} stroke-linejoin="round">${SHAPES[shape]}</g></svg>`;
+}
+const iconCache = new Map();
+function shapeIcon(shape, color, filled, size, faded) {
+  const k = [shape, color, filled, size, faded].join("|");
+  if (!iconCache.has(k)) iconCache.set(k, L.divIcon({ className: "", iconSize: [size, size],
+    html: `<div style="opacity:${faded ? 0.5 : 1}">${shapeSvg(shape, color, filled, size)}</div>` }));
+  return iconCache.get(k);
+}
 
 async function loadAtlas() {
   if (A.data) return;
@@ -452,7 +492,7 @@ async function loadRecords() {
 function bookPopup(name, list) {
   return `<div class="pop"><div class="sp">📖 ${esc(name)}</div>
     <div class="meta">Locality from the book · position approximate</div>
-    ${list.map((s) => `<div class="meta" style="margin-top:4px"><span class="sw" style="background:${s.color}"></span><i>${esc(fullName(s))}</i>${s.page ? ` · p. ${s.page}` : ""}</div>`).join("")}</div>`;
+    ${list.map((s) => `<div class="meta" style="margin-top:4px">${shapeSvg(shapeOf(s), s.color, false, 13, "shp-i")}<i>${esc(fullName(s))}</i>${s.page ? ` · p. ${s.page}` : ""}</div>`).join("")}</div>`;
 }
 
 function recPopup(o, s) {
@@ -497,15 +537,18 @@ function renderAtlas(fit) {
     for (const [name, list] of byLoc) {
       const ll = A.data.localities[name], multi = list.length > 1;
       pts.push(ll);
-      const icon = L.divIcon({ className: "", iconSize: multi ? [18, 18] : [13, 13],
-        html: `<div class="bk${multi ? " multi" : ""}" style="${multi ? "" : `background:${list[0].color}`}">${multi ? list.length : ""}</div>` });
+      // 同一地點有多種: 把各種的形狀排成小方陣(最多 4 個,其餘以 +n 表示)
+      const shown = list.slice(0, list.length > 4 ? 3 : 4);
+      const icon = multi ? L.divIcon({ className: "", iconSize: [28, 28],
+        html: `<div class="bkm">${shown.map((x) => shapeSvg(shapeOf(x), x.color, false, 12)).join("")}${list.length > shown.length ? `<b>+${list.length - shown.length}</b>` : ""}</div>` })
+        : shapeIcon(shapeOf(list[0]), list[0].color, false, 18, false);
       L.marker(ll, { icon, title: name, zIndexOffset: 500 }).bindPopup(bookPopup(name, list), popOpts()).addTo(bookLayer);
     }
     vis.forEach((s) => (s.areas || []).forEach(([name, la, lo, rx, ry]) => {
       const ring = ellipse(la, lo, rx, ry);
       ring.forEach((p) => pts.push(p));
       L.polygon(ring, { color: s.color, weight: 1.5, dashArray: "6 4", fillColor: s.color, fillOpacity: 0.08 })
-        .bindPopup(`<div class="pop"><div class="sp">📖 ${esc(name)}</div><div class="meta"><span class="sw" style="background:${s.color}"></span><i>${esc(fullName(s))}</i> · rough area from the book</div></div>`, popOpts())
+        .bindPopup(`<div class="pop"><div class="sp">📖 ${esc(name)}</div><div class="meta">${shapeSvg(shapeOf(s), s.color, false, 13, "shp-i")}<i>${esc(fullName(s))}</i> · rough area from the book</div></div>`, popOpts())
         .addTo(bookLayer);
     }));
   }
@@ -513,8 +556,7 @@ function renderAtlas(fit) {
   recCluster.addLayers(recs.map((o) => {
     const s = spOf(o), ll = o.location.split(",").map(Number);
     pts.push(ll);
-    return L.circleMarker(ll, { radius: 6, weight: 1.5, color: "#ffffff", fillColor: s ? s.color : "#8a8a8a", fillOpacity: o.obscured ? 0.5 : 0.95,
-      dashArray: o.obscured ? "3 3" : null }).bindPopup(() => recPopup(o, s), popOpts());
+    return L.marker(ll, { icon: shapeIcon(shapeOf(s), s ? s.color : "#8a8a8a", true, 16, o.obscured), sp: s }).bindPopup(() => recPopup(o, s), popOpts());
   }));
   if (fit && pts.length) { fitTo(L.latLngBounds(pts), 11); if (A.recs) A.fitted = true; }
 
@@ -555,9 +597,9 @@ function renderAtlasList() {
   let html = "", genus = "";
   for (const s of (A.data ? A.data.species : [])) {
     if (q && !fullName(s).toLowerCase().includes(q) && !(s.common || "").toLowerCase().includes(q)) continue;
-    if (s.genus !== genus) { genus = s.genus; html += `<div class="grp"><i>${esc(genus)}</i></div>`; }
+    if (s.genus !== genus) { genus = s.genus; html += `<div class="grp">${shapeSvg(shapeOf(s), "#777", true, 13, "shp-i")}<i>${esc(genus)}</i></div>`; }
     const n = counts.get(s.key) || 0;
-    html += `<button class="row" data-key="${esc(s.key)}"><span style="display:flex;align-items:baseline"><span class="sw" style="background:${s.color}"></span><span><span class="nm">${esc(fullName(s))}</span>${s.common ? `<span class="zh">${esc(s.common)}</span>` : ""}</span></span>
+    html += `<button class="row" data-key="${esc(s.key)}"><span style="display:flex;align-items:baseline">${shapeSvg(shapeOf(s), s.color, true, 14, "shp-i")}<span><span class="nm">${esc(fullName(s))}</span>${s.common ? `<span class="zh">${esc(s.common)}</span>` : ""}</span></span>
       <span class="cnt">${A.recs ? (n ? `${n} record${n > 1 ? "s" : ""}` : "—") : ""}</span>
       <span class="pr">${s.page ? `Book p. ${s.page}` : "Not in the book for Victoria"} · ${where(s)}<br>${esc(s.note)}<br>${atlasPrice(s)}</span></button>`;
   }
