@@ -121,6 +121,12 @@
     border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 14px; display: none; max-width: calc(100vw - 32px); }
   .msg.on { display: block; }
   .msg button { margin-left: 8px; border: 1px solid var(--line); background: var(--chip); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+  /* 茶樹開花圖層(docs/teatree.json,每週看照片更新) */
+  .chip.tt { border-color: #d6336c; }
+  .chip.tt.off { border-color: var(--line); }
+  .chip.tt .shp-i { margin-right: 0; }
+  .pop .tag { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; color: #ffffff; background: #c2255c;
+    border-radius: 999px; padding: 1px 9px; }
   @media (max-width: 520px) { .title h1 { font-size: 16px; } }
 </style>
 </head>
@@ -295,6 +301,12 @@ function buildChips() {
   all.className = "chip all"; all.id = "toggleAll";
   all.onclick = () => { if (S.off.size === 0) S.groups.forEach((g) => S.off.add(g.name)); else S.off.clear(); render(false); };
   box.appendChild(all);
+  const tt = document.createElement("button");
+  tt.className = "chip tt off"; tt.id = "teaTree"; tt.setAttribute("aria-pressed", "false");
+  tt.innerHTML = `${flowerSvg(15, "#ffffff", "shp-i")} Tea-tree in flower <span class="n"></span>`;
+  tt.onclick = () => toggleTeaTree(!T.on);
+  box.appendChild(tt);
+  renderTeaTree();
   for (const [k, label] of [["book", `${shapeSvg("circle", "#555", false, 13, "shp-i")}Book localities (outline)`], ["inat", `${shapeSvg("circle", "#555", true, 13, "shp-i")}iNat records, all years (filled)`], ["aurata", "✨ Golden stag"]]) {
     const b = document.createElement("button");
     b.className = "chip lay"; b.dataset.layer = k;
@@ -634,6 +646,57 @@ async function setView(v) {
     map.removeLayer(atlasLayer); map.addLayer(cluster);
     render(false);
   }
+}
+
+// ---------- 茶樹開花:docs/teatree.json(過去 7 天,每週五逐張看照片更新) ----------
+// plant = 照片中看得到花的茶樹;beetle = 停在茶樹花上的訪花甲蟲。兩種都代表那裡的茶樹正在開。
+const T = { data: null, on: false, loading: false, fitted: false };
+const TT_COLOR = "#d6336c";
+const ttLayer = L.layerGroup();
+function flowerSvg(size, center, cls = "shp") {
+  const petals = [0, 72, 144, 216, 288].map((a) => {
+    const r = a * Math.PI / 180;
+    return `<circle cx="${(4.3 * Math.sin(r)).toFixed(2)}" cy="${(-4.3 * Math.cos(r)).toFixed(2)}" r="3.7"/>`;
+  }).join("");
+  return `<svg class="${cls}" width="${size}" height="${size}" viewBox="-9.5 -9.5 19 19" aria-hidden="true"><g fill="${TT_COLOR}" stroke="#ffffff" stroke-width="1.2">${petals}</g><circle r="2.3" fill="${center}"/></svg>`;
+}
+const ttIcons = {};
+function ttIcon(kind, obscured) {
+  const k = kind + obscured;
+  if (!ttIcons[k]) ttIcons[k] = L.divIcon({ className: "", iconSize: [20, 20],
+    html: `<div style="opacity:${obscured ? 0.6 : 1}">${flowerSvg(20, kind === "beetle" ? "#1d1d1b" : "#ffffff")}</div>` });
+  return ttIcons[k];
+}
+const shortDate = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+function ttPopup(p) {
+  const what = p.kind === "beetle" ? "🪲 Beetle on tea-tree flowers" : "🌸 Tea-tree in flower";
+  return `<div class="pop">${p.photo ? `<img src="${esc(p.photo)}" alt="" loading="lazy">` : ""}
+    <span class="tag">${what}</span>
+    <div class="sp"><span class="sci">${esc(p.taxon)}</span></div>
+    <div class="meta">📅 ${esc(p.date)}</div>
+    <div class="meta">📍 ${esc(p.place || "Unknown location")}${p.obscured ? " (location obscured)" : ""}</div>
+    <div class="meta" style="margin-top:6px"><a href="https://www.inaturalist.org/observations/${p.id}" target="_blank" rel="noopener">View on iNaturalist →</a></div></div>`;
+}
+async function toggleTeaTree(on) {
+  T.on = on;
+  if (on && !T.data && !T.loading) {
+    T.loading = true; renderTeaTree();
+    try {
+      T.data = await loadJSON("teatree.json");
+      for (const p of T.data.points || []) L.marker([p.lat, p.lng], { icon: ttIcon(p.kind, p.obscured), zIndexOffset: 800 }).bindPopup(() => ttPopup(p), popOpts()).addTo(ttLayer);
+    } catch (e) { T.on = false; showMsg(`Couldn’t load the tea-tree layer (${esc(e.message)})`); }
+    T.loading = false;
+  }
+  if (T.on) map.addLayer(ttLayer); else map.removeLayer(ttLayer);
+  if (T.on && T.data && !T.fitted && (T.data.points || []).length) { fitTo(L.latLngBounds(T.data.points.map((p) => [p.lat, p.lng])), 10); T.fitted = true; }
+  renderTeaTree();
+}
+function renderTeaTree() {
+  const c = $("teaTree"); if (!c) return;
+  c.classList.toggle("off", !T.on); c.setAttribute("aria-pressed", String(T.on));
+  const d = T.data;
+  c.querySelector(".n").textContent = T.loading ? "…" : d ? `${shortDate(d.from)}–${shortDate(d.to)} · ${(d.points || []).length}` : "past 7 days";
+  c.title = d ? `Tea-tree flowering ${d.from} to ${d.to}, photos checked by eye, updated ${d.updated}` : "Where tea-tree flowered in the past 7 days (updated weekly)";
 }
 
 // ---------- 事件 ----------
