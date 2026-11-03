@@ -22,5 +22,6 @@
 
 - `docs/species.json`:追蹤清單,由 bot 每次執行時從私有設定產生(`publish_species.py`),只含學名、中文名與類群。
 - `docs/prices.json`:市場參考價格,每月更新一次;沒有查到價格的物種顯示「無」。
+- `docs/teatree.json`:「Tea-tree in flower」圖層,過去 7 天維多利亞州哪裡的茶樹(*Leptospermum*、*Gaudium*)在開花。每週五傍晚由 Claude 的排程任務抓 iNat 紀錄、逐張看照片判讀後更新;`plant` 是照片中看得到花的茶樹,`beetle` 是停在茶樹花上的訪花甲蟲(吉丁蟲、郭公蟲、花蚤、*Phyllotocus*)。
 - 啟用方式:repo Settings → Pages → Build and deployment → Deploy from a branch → `main` / `/docs`。
 - `docs/stag-atlas.json`:「Stag atlas」檢視用的鍬形蟲資料,包含 Hangay & de Keyzer (2017) *A Guide to Stag Beetles of Australia* 書中的維多利亞產地(座標依地名手動估計)與物種說明。iNat 歷年研究級紀錄在打開該檢視時即時抓取。網址加上 `#atlas` 可直接打開。
